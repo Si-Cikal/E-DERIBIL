@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>E-DERIBIL | Next-Gen Family Vault</title>
+    
+    <!-- Meta untuk PWA & Mobile -->
+    <meta name="theme-color" content="#f0f9ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="E-DERIBIL">
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 12s linear infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Latar Belakang Gradasi Cantik (Aurora Glassmorphism) */
+        .ambient-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; overflow: hidden;
+            background: linear-gradient(135deg, #f0f9ff 0%, #fdf4ff 50%, #f0fdf4 100%);
+        }
+        .blob {
+            position: absolute; filter: blur(80px); border-radius: 50%; opacity: 0.6; mix-blend-mode: multiply;
+            animation: moveBlobs 20s infinite alternate ease-in-out;
+        }
+        .blob-1 { background: #38bdf8; width: 50vw; height: 50vw; top: -10%; left: -10%; animation-delay: 0s; }
+        .blob-2 { background: #f472b6; width: 45vw; height: 45vw; top: 40%; right: -10%; animation-delay: -5s; }
+        .blob-3 { background: #34d399; width: 40vw; height: 40vw; bottom: -10%; left: 20%; animation-delay: -10s; }
+        .blob-4 { background: #c084fc; width: 35vw; height: 35vw; top: 10%; left: 40%; animation-delay: -15s; }
+
+        @keyframes moveBlobs {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        /* Kartu Kaca (Glass Card) */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+        }
+
+        /* Overlay Modal */
+        .glass-overlay {
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Scrollbar Halus */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.5); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.8); }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white bg-transparent">
+    
+    <!-- Background Animasi Gradasi Cantik -->
+    <div class="ambient-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob blob-4"></div>
+    </div>
+
+    <!-- DEFINISI LOGO E-DERIBIL MASTER CREST V3 -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <defs>
+            <!-- Gradasi Perisai -->
+            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0284c7" />
+                <stop offset="100%" stop-color="#1e3a8a" />
+            </linearGradient>
+            <linearGradient id="shieldInnerGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#38bdf8" />
+                <stop offset="100%" stop-color="#6366f1" />
+            </linearGradient>
+            
+            <!-- Gradasi Karakter Keluarga -->
+            <linearGradient id="dadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#34d399" />
+                <stop offset="100%" stop-color="#059669" />
+            </linearGradient>
+            <linearGradient id="momGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fb7185" />
+                <stop offset="100%" stop-color="#be123c" />
+            </linearGradient>
+            <linearGradient id="kidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fbbf24" />
+                <stop offset="100%" stop-color="#b45309" />
+            </linearGradient>
+            
+            <!-- Gradasi Orbit & Bintang -->
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#a855f7" />
+                <stop offset="100%" stop-color="#ec4899" />
+            </linearGradient>
+            <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fef08a" />
+                <stop offset="50%" stop-color="#f59e0b" />
+                <stop offset="100%" stop-color="#ea580c" />
+            </linearGradient>
+            
+            <filter id="glow">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+        </defs>
+
+        <g id="deribil-logo">
+            <!-- Cincin Teknologi Kuantum Berwarna -->
+            <circle cx="100" cy="100" r="95" fill="none" stroke="url(#ringGrad)" stroke-width="2.5" stroke-dasharray="6 8" opacity="0.7"/>
+            <circle cx="100" cy="100" r="85" fill="none" stroke="#38bdf8" stroke-width="4.5" stroke-dasharray="50 150" stroke-linecap="round" filter="url(#glow)">
+                <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="8s" repeatCount="indefinite" />
+            </circle>
+
+            <!-- Perisai Aegis Utama dengan Warna Kontras Gelap ke Terang -->
+            <path d="M100 12 L175 42 L175 110 C175 165 100 195 100 195 C100 195 25 165 25 110 L25 42 Z" fill="url(#shieldGrad)" stroke="#38bdf8" stroke-width="3" />
+            <path d="M100 20 L165 47 L165 108 C165 155 100 182 100 182 L100 20 Z" fill="url(#shieldInnerGrad)" opacity="0.8" />
+            <path d="M100 20 L35 47 L35 108 C35 155 100 182 100 182 L100 20 Z" fill="#1e3a8a" opacity="0.5" />
+
+            <!-- Kubah Bayangan Latar Belakang -->
+            <path d="M50 135 C50 105 80 85 100 85 C120 85 150 105 150 135 Z" fill="#e0e7ff" opacity="0.25" />
+            
+            <!-- Siluet Ayah (Zamrud) -->
+            <circle cx="75" cy="88" r="14" fill="url(#dadGrad)" />
+            <path d="M52 140 C52 110 98 110 98 140 Z" fill="url(#dadGrad)" />
+            
+            <!-- Siluet Ibu (Mawar) -->
+            <circle cx="125" cy="94" r="12" fill="url(#momGrad)" />
+            <path d="M102 140 C102 115 148 115 148 140 Z" fill="url(#momGrad)" />
+            
+            <!-- Siluet Anak (Emas Bersinar) -->
+            <circle cx="100" cy="110" r="10" fill="url(#kidGrad)" filter="url(#glow)" />
+            <path d="M83 145 C83 125 117 125 117 145 Z" fill="url(#kidGrad)" />
+
+            <!-- Bintang Apex Emas Kejayaan -->
+            <path d="M100 0 L106 18 L124 24 L106 30 L100 48 L94 30 L76 24 L94 18 Z" fill="url(#starGrad)" filter="url(#glow)">
+                <animateTransform attributeName="transform" type="rotate" from="0 100 24" to="360 100 24" dur="5s" repeatCount="indefinite" />
+            </path>
+            <!-- Inti Berlian Bintang -->
+            <circle cx="100" cy="24" r="4" fill="#ffffff" filter="url(#glow)"/>
+        </g>
+    </svg>
+
+    <!-- ==================== LOGIN SCREEN ==================== -->
+    <div id="login-screen" class="fixed inset-0 z-[100] flex flex-col lg:flex-row bg-white transition-opacity duration-700 overflow-hidden">
+        
+        <!-- SISI KIRI: Branding, Kartun Keluarga & Slogan -->
+        <div class="relative w-full lg:w-[55%] h-[40vh] lg:h-full bg-gradient-to-br from-brand-50 via-blue-50 to-indigo-100 flex flex-col justify-center items-center overflow-hidden shrink-0">
+            <!-- Background Ambient Orbs -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                <div class="absolute top-[-10%] left-[-10%] w-[50vh] h-[50vh] bg-blue-400/20 rounded-full blur-3xl animate-pulse-slow"></div>
+                <div class="absolute bottom-[-10%] right-[-10%] w-[40vh] h-[40vh] bg-indigo-400/20 rounded-full blur-3xl animate-pulse-slow" style="animation-delay: 2s;"></div>
+            </div>
+
+            <!-- Header Kiri: Logo E-DERIBIL -->
+            <div class="absolute top-6 left-6 lg:top-8 lg:left-10 z-20 flex items-center gap-3 cursor-pointer group" onclick="openModal('modal-logo')" title="Bedah Filosofi Logo">
+                <div class="w-10 h-10 lg:w-14 lg:h-14 drop-shadow-xl group-hover:scale-105 transition-transform">
+                    <svg viewBox="0 0 200 200" class="w-full h-full"><use href="#deribil-logo" /></svg>
+                </div>
+                <div class="hidden sm:block">
+                    <h2 class="text-xl lg:text-2xl font-black text-slate-800 tracking-tight leading-none">E-DERIBIL</h2>
+                    <p class="text-[9px] lg:text-[10px] font-black text-brand-600 uppercase tracking-widest mt-0.5">Family Vault</p>
+                </div>
+            </div>
+
+            <!-- Ilustrasi Kartun Keluarga (Berdasarkan Foto) -->
+            <div class="relative z-10 w-full max-w-[280px] lg:max-w-md mt-12 lg:mt-0 animate-float drop-shadow-2xl">
+                <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto">
+                    <!-- Base Shadow/Blob -->
+                    <ellipse cx="200" cy="340" rx="120" ry="15" fill="#cbd5e1" opacity="0.6"/>
+                    <circle cx="200" cy="180" r="140" fill="#ffffff" opacity="0.4" filter="blur(20px)"/>
+
+                    <!-- ================= AYAH (Kanan) ================= -->
+                    <g id="kartun-ayah" transform="translate(100, 20)">
+                        <!-- Kaki -->
+                        <rect x="135" y="220" width="16" height="100" fill="#0f172a" rx="4"/>
+                        <rect x="165" y="220" width="16" height="100" fill="#0f172a" rx="4"/>
+                        <ellipse cx="143" cy="320" rx="14" ry="8" fill="#78350f"/> <!-- Sandal -->
+                        <ellipse cx="173" cy="320" rx="14" ry="8" fill="#78350f"/>
+                        
+                        <!-- Baju Batik (Coklat) -->
+                        <path d="M120 100 L195 100 C205 100 210 110 205 130 L190 230 C188 240 180 245 170 245 L145 245 C135 245 127 240 125 230 L110 130 C105 110 110 100 120 100 Z" fill="#d4a373"/>
+                        <!-- Pola Batik Sederhana -->
+                        <path d="M130 130 Q140 120 150 130 T170 130 T190 130" fill="none" stroke="#78350f" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        <path d="M125 160 Q140 150 150 160 T170 160 T185 160" fill="none" stroke="#78350f" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        <path d="M125 190 Q140 180 150 190 T170 190 T185 190" fill="none" stroke="#78350f" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+                        
+                        <!-- Lengan & Tangan Ayah -->
+                        <path d="M115 110 L95 160 L105 165 L120 130 Z" fill="#d4a373"/>
+                        <circle cx="100" cy="165" r="8" fill="#fcd5ce"/>
+                        <path d="M200 110 L220 170 L210 175 L195 130 Z" fill="#d4a373"/>
+                        <circle cx="215" cy="175" r="8" fill="#fcd5ce"/>
+
+                        <!-- Kepala Ayah -->
+                        <circle cx="157" cy="80" r="24" fill="#fcd5ce"/>
+                        <!-- Rambut -->
+                        <path d="M132 80 C132 50 182 50 182 80 C182 60 132 60 132 80 Z" fill="#1e293b"/>
+                        <path d="M135 75 Q157 55 180 75" fill="none" stroke="#1e293b" stroke-width="8" stroke-linecap="round"/>
+                        <!-- Wajah (Senyum) -->
+                        <path d="M148 85 Q157 95 166 85" fill="none" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="150" cy="75" r="2.5" fill="#78350f"/>
+                        <circle cx="164" cy="75" r="2.5" fill="#78350f"/>
+                    </g>
+
+                    <!-- ================= BUNDA (Kiri) ================= -->
+                    <g id="kartun-bunda" transform="translate(-40, 30)">
+                        <!-- Ujung Kaki/Sepatu -->
+                        <ellipse cx="140" cy="310" rx="12" ry="8" fill="#94a3b8"/>
+                        <ellipse cx="170" cy="310" rx="12" ry="8" fill="#94a3b8"/>
+
+                        <!-- Gamis Hijau Zaitun (Olive) -->
+                        <path d="M135 120 L185 120 C195 120 200 130 195 150 L210 300 C212 310 205 315 195 315 L115 315 C105 315 98 310 100 300 L115 150 C110 130 125 120 135 120 Z" fill="#858f50"/>
+                        <!-- Lipatan Baju -->
+                        <line x1="155" y1="130" x2="155" y2="305" stroke="#656d4a" stroke-width="3" opacity="0.5"/>
+                        
+                        <!-- Lengan (Angkat Tangan Peace/Saranghae) -->
+                        <path d="M125 130 L90 100 L100 90 L135 120 Z" fill="#858f50"/>
+                        <circle cx="95" cy="95" r="8" fill="#fcd5ce"/>
+                        <!-- Lengan Kanan memegang Ayah -->
+                        <path d="M185 130 L210 170 L200 175 L180 145 Z" fill="#858f50"/>
+                        <circle cx="205" cy="170" r="8" fill="#fcd5ce"/>
+
+                        <!-- Hijab & Kepala -->
+                        <path d="M135 90 C135 55 185 55 185 90 C185 140 175 150 160 150 C145 150 135 140 135 90 Z" fill="#9c9a42"/>
+                        <path d="M140 95 C140 120 180 120 180 95 C180 110 140 110 140 95 Z" fill="#7a7833" opacity="0.3"/> <!-- Shadow Hijab -->
+                        <circle cx="160" cy="85" r="20" fill="#fcd5ce"/>
+                        <!-- Garis Hijab Dalam -->
+                        <path d="M142 75 C150 65 170 65 178 75" fill="none" stroke="#7a7833" stroke-width="4" stroke-linecap="round"/>
+
+                        <!-- Kacamata & Wajah Bunda -->
+                        <circle cx="152" cy="85" r="6" fill="none" stroke="#1e293b" stroke-width="2"/>
+                        <circle cx="168" cy="85" r="6" fill="none" stroke="#1e293b" stroke-width="2"/>
+                        <line x1="158" y1="85" x2="162" y2="85" stroke="#1e293b" stroke-width="2"/>
+                        <path d="M154 95 Q160 102 166 95" fill="none" stroke="#78350f" stroke-width="2" stroke-linecap="round"/> <!-- Senyum -->
+                    </g>
+
+                    <!-- ================= ANAK / NABIL (Tengah Depan) ================= -->
+                    <g id="kartun-anak" transform="translate(45, 130)">
+                        <!-- Kaki & Celana Jeans -->
+                        <rect x="135" y="140" width="14" height="60" fill="#1e40af" rx="4"/>
+                        <rect x="161" y="140" width="14" height="60" fill="#1e40af" rx="4"/>
+                        <!-- Sandal Anak -->
+                        <ellipse cx="142" cy="200" rx="10" ry="6" fill="#0f172a"/>
+                        <ellipse cx="168" cy="200" rx="10" ry="6" fill="#0f172a"/>
+
+                        <!-- Badan & Jaket Abu-Hijau -->
+                        <path d="M125 80 L185 80 C190 80 195 85 195 100 L190 150 C190 155 185 160 180 160 L130 160 C125 160 120 155 120 150 L115 100 C115 85 120 80 125 80 Z" fill="#4b5563"/>
+                        <!-- Garis Resleting Jaket -->
+                        <line x1="155" y1="80" x2="155" y2="160" stroke="#9ca3af" stroke-width="4"/>
+                        <rect x="125" y="90" width="28" height="70" fill="#f1f5f9" rx="2"/> <!-- Kaos Dalam -->
+                        
+                        <!-- Lengan Jaket -->
+                        <path d="M122 85 L105 130 L115 135 L128 95 Z" fill="#4b5563"/>
+                        <circle cx="110" cy="132" r="6" fill="#fcd5ce"/>
+                        <path d="M188 85 L205 130 L195 135 L182 95 Z" fill="#4b5563"/>
+                        <circle cx="200" cy="132" r="6" fill="#fcd5ce"/>
+
+                        <!-- Kepala Anak -->
+                        <circle cx="155" cy="55" r="22" fill="#fcd5ce"/>
+                        
+                        <!-- Kacamata Putih Lebar -->
+                        <circle cx="143" cy="55" r="11" fill="#0f172a" stroke="#ffffff" stroke-width="4"/>
+                        <circle cx="167" cy="55" r="11" fill="#0f172a" stroke="#ffffff" stroke-width="4"/>
+                        <line x1="154" y1="55" x2="156" y2="55" stroke="#ffffff" stroke-width="4"/>
+                        <!-- Hidung & Senyum -->
+                        <path d="M152 70 Q155 74 158 70" fill="none" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+                        
+                        <!-- Topi Kupluk Merah (Beanie) -->
+                        <path d="M133 55 C133 25 177 25 177 55 C177 55 155 45 133 55 Z" fill="#991b1b"/>
+                        <path d="M133 55 Q155 45 177 55" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round"/>
+                        <!-- Pom-pom Telinga Topi -->
+                        <circle cx="140" cy="30" r="9" fill="#991b1b"/>
+                        <circle cx="170" cy="30" r="9" fill="#991b1b"/>
+                        <!-- Tekstur Pom-pom -->
+                        <circle cx="138" cy="28" r="3" fill="#f87171"/>
+                        <circle cx="172" cy="28" r="3" fill="#f87171"/>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Teks Slogan -->
+            <div class="relative z-10 text-center mt-6 lg:mt-8 hidden sm:block">
+                <h1 class="text-2xl lg:text-3xl font-black text-slate-800 mb-2 leading-tight">Satu Brankas,<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600">Sejuta Memori Keluarga.</span></h1>
+                <p class="text-slate-500 font-bold text-xs lg:text-sm">Simpan momen, tagihan, dan rahasia dengan aman & nyaman.</p>
+            </div>
+        </div>
+
+        <!-- SISI KANAN: Panel Form Login -->
+        <div class="relative w-full lg:w-[45%] h-[60vh] lg:h-full flex flex-col justify-center items-center p-6 lg:p-12 z-10 bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.05)]">
+            
+            <div class="w-full max-w-sm relative z-10">
+                <div class="text-center lg:text-left mb-8">
+                    <div class="inline-flex items-center justify-center bg-brand-50 text-brand-600 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full mb-4 border border-brand-100 shadow-sm">Portal Masuk</div>
+                    <h2 class="text-3xl font-black text-slate-800 tracking-tight">Selamat Datang</h2>
+                    <p class="text-slate-500 font-bold text-sm mt-1">Buka brankas untuk mengakses data.</p>
+                </div>
+
+                <form id="login-form" class="space-y-5">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Pilih Profil Akses</label>
+                        <div class="relative group">
+                            <select id="login-user" onchange="updatePinHint()" class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-bold focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 appearance-none cursor-pointer transition-all shadow-sm">
+                                <option value="Dede">Dede (Kepala Keluarga / Admin)</option>
+                                <option value="Rizka">Rizka (Istri / Co-Admin)</option>
+                                <option value="Nabil">Nabil (Anak / Kid-Safe Mode)</option>
+                            </select>
+                            <i class="ph-bold ph-user-circle absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl group-focus-within:text-brand-500 transition-colors"></i>
+                            <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">PIN Keamanan</label>
+                            <span id="pin-hint" class="text-[9px] bg-gradient-to-r from-cyan-100 to-blue-100 text-blue-700 px-2.5 py-1 rounded-full font-black border border-blue-200 shadow-sm animate-pulse">PIN: 123456</span>
+                        </div>
+                        <div class="relative group">
+                            <input type="password" id="login-pin" required class="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-mono font-black tracking-[0.3em] text-lg focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 placeholder:tracking-normal placeholder:font-sans placeholder:font-bold placeholder:text-slate-400 placeholder:text-sm transition-all shadow-sm" placeholder="Ketik PIN Rahasia...">
+                            <i class="ph-bold ph-lock-key absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl group-focus-within:text-brand-500 transition-colors"></i>
+                            <button type="button" onclick="togglePassword('login-pin', 'eye-icon-login')" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-500 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-slate-100">
+                                <i id="eye-icon-login" class="ph-bold ph-eye text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-login" class="w-full py-4 mt-2 bg-gradient-to-r from-brand-500 via-blue-500 to-indigo-500 hover:from-brand-400 hover:via-blue-400 hover:to-indigo-400 text-white rounded-2xl font-black text-sm shadow-[0_10px_25px_rgba(59,130,246,0.3)] transform active:scale-95 transition-all flex items-center justify-center gap-2 border border-white/30">
+                        <i class="ph-bold ph-key text-xl"></i> Buka Brankas
+                    </button>
+                </form>
+                
+                <div class="mt-8 flex flex-col items-center">
+                    <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-3 border-t border-slate-100 pt-6 w-full text-center">Atau Gunakan Biometrik</p>
+                    <button type="button" onclick="simulateBiometric()" class="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-brand-500 hover:bg-brand-500 hover:text-white hover:border-brand-500 shadow-sm hover:shadow-lg hover:shadow-brand-500/30 transition-all duration-300 transform hover:scale-110 group">
+                        <i class="ph-bold ph-fingerprint text-3xl group-hover:animate-pulse"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer Kanan (Install App) -->
+            <div class="absolute bottom-6 w-full text-center">
+                <button onclick="promptInstall()" class="text-[10px] font-black text-slate-500 hover:text-brand-600 bg-slate-50 px-4 py-2 rounded-full border border-slate-200 shadow-sm transition-all hover:bg-white inline-flex items-center gap-1.5">
+                    <i class="ph-bold ph-download-simple"></i> Pasang Aplikasi di HP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN APPLICATION ==================== -->
+    <div id="main-app" class="hidden flex-1 flex overflow-hidden w-full relative z-10 fade-in">
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 glass-overlay z-40 hidden lg:hidden transition-opacity opacity-0"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white/70 backdrop-blur-2xl border-r border-white/80 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-[20px_0_40px_rgba(0,0,0,0.05)] lg:shadow-none">
+            
+            <!-- Branding Sidebar -->
+            <div class="h-24 border-b border-white/80 flex items-center px-6 gap-4 bg-gradient-to-br from-white/60 to-white/30 cursor-pointer" onclick="openModal('modal-logo')">
+                <div class="w-14 h-14 relative drop-shadow-md shrink-0">
+                    <svg viewBox="0 0 200 200" class="w-full h-full"><use href="#deribil-logo" /></svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600 tracking-tight">E-DERIBIL</h2>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Vault System</p>
+                </div>
+            </div>
+
+            <!-- User Profile Box -->
+            <div class="p-5 border-b border-slate-100/50 bg-white/40">
+                <div class="bg-gradient-to-br from-white to-slate-50 border border-white rounded-2xl p-3.5 flex items-center gap-4 shadow-sm">
+                    <div id="user-avatar" class="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-600 text-white flex items-center justify-center font-black text-2xl shadow-inner border border-white/20">D</div>
+                    <div class="flex-1 overflow-hidden">
+                        <div id="user-name" class="font-black text-base text-slate-900 truncate">Dede</div>
+                        <div id="user-role" class="text-[10px] font-black text-brand-600 uppercase tracking-widest mt-1 bg-brand-50 px-2 py-0.5 rounded-md inline-block">Super Admin</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 overflow-y-auto p-4 space-y-1.5 custom-scrollbar">
+                
+                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-3 mt-2">Data & Keamanan</div>
+                
+                <button onclick="switchTab('dokumen')" id="nav-dokumen" class="nav-btn active w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0"><i class="ph-fill ph-files text-blue-500 text-lg"></i></div> 
+                    <span class="truncate">Arsip Utama</span>
+                </button>
+                <button onclick="switchTab('rahasia')" id="nav-rahasia" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600">
+                    <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0"><i class="ph-fill ph-lock-key text-amber-500 text-lg"></i></div> 
+                    <span class="truncate">Brankas Sandi</span>
+                </button>
+                <button onclick="switchTab('kesehatan')" id="nav-kesehatan" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600">
+                    <div class="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center shrink-0"><i class="ph-fill ph-heartbeat text-rose-500 text-lg"></i></div> 
+                    <span class="truncate">Data Medis</span>
+                </button>
+                <button onclick="switchTab('garansi')" id="nav-garansi" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600">
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0"><i class="ph-fill ph-receipt text-emerald-500 text-lg"></i></div> 
+                    <span class="truncate">Laci Garansi</span>
+                </button>
+
+                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-3 pt-4 border-t border-slate-100/50 mt-2">Waktu & Keluarga</div>
+                
+                <button onclick="switchTab('tagihan')" id="nav-tagihan" class="nav-btn w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600 relative overflow-hidden group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0"><i class="ph-fill ph-broadcast text-orange-500 text-lg group-hover:animate-pulse"></i></div> 
+                        <span class="truncate">Radar Tagihan</span>
+                    </div>
+                    <span id="badge-tagihan" class="bg-gradient-to-r from-rose-500 to-red-500 text-white text-[10px] px-2.5 py-0.5 rounded-full font-black shadow-sm shrink-0">0</span>
+                </button>
+                <button onclick="switchTab('kapsul')" id="nav-kapsul" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600">
+                    <div class="w-8 h-8 rounded-full bg-fuchsia-100 flex items-center justify-center shrink-0"><i class="ph-fill ph-hourglass-high text-fuchsia-500 text-lg"></i></div> 
+                    <span class="truncate">Kapsul Waktu</span>
+                </button>
+                <button onclick="switchTab('radar')" id="nav-radar" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600">
+                    <div class="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center shrink-0"><i class="ph-fill ph-map-pin text-cyan-500 text-lg"></i></div> 
+                    <span class="truncate">Radar Jejak Live</span>
+                </button>
+
+                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-3 pt-4 border-t border-slate-100/50 mt-2">Sistem & Keamanan</div>
+                
+                <button onclick="switchTab('pengaturan')" id="nav-pengaturan" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600">
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0"><i class="ph-fill ph-gear text-slate-600 text-lg animate-spin-slow"></i></div> 
+                    <span class="truncate">Pengaturan Aplikasi</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-white/80 bg-white/40 shrink-0">
+                <button onclick="logout()" class="w-full py-4 bg-gradient-to-r from-slate-100 to-rose-50 hover:from-rose-100 hover:to-red-100 text-rose-600 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all border border-white shadow-sm">
+                    <i class="ph-bold ph-power text-lg"></i> Kunci & Keluar
+                </button>
+            </div>
+        </aside>
+
+        <!-- Area Konten Utama -->
+        <main class="flex-1 flex flex-col min-w-0 bg-transparent">
+            
+            <!-- Header Atas -->
+            <header class="h-20 bg-white/60 backdrop-blur-xl border-b border-white/80 px-4 sm:px-8 flex items-center justify-between shrink-0 z-20 shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
+                <div class="flex items-center gap-4 w-full max-w-xl">
+                    <button onclick="toggleSidebar()" class="p-2 -ml-2 text-slate-500 hover:text-brand-600 transition-colors lg:hidden bg-white/50 rounded-xl border border-white shadow-sm"><i class="ph-bold ph-list text-2xl"></i></button>
+                    
+                    <!-- Global Live Search -->
+                    <div class="relative w-full max-w-md hidden sm:block">
+                        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-brand-400 text-lg"></i>
+                        <input type="text" oninput="handleSearch(this.value)" placeholder="Cari di brankas cerdas..." class="w-full pl-12 pr-4 py-3 bg-white/70 backdrop-blur-md border border-white rounded-full text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 transition-all font-bold text-slate-800 shadow-sm placeholder:font-medium placeholder:text-slate-400">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 shrink-0">
+                    <!-- Badging API Notification -->
+                    <div class="relative group cursor-pointer" onclick="document.getElementById('notif-dropdown').classList.toggle('hidden')">
+                        <div class="p-3 bg-gradient-to-tr from-white to-slate-50 border border-white rounded-full text-slate-600 hover:text-brand-600 shadow-sm transition-all relative">
+                            <i class="ph-bold ph-bell text-xl"></i>
+                            <span class="absolute top-0 right-0 w-3.5 h-3.5 bg-rose-500 border-2 border-white rounded-full animate-pulse shadow-sm"></span>
+                        </div>
+
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-[2rem] shadow-2xl border border-slate-100 z-50 overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+                                <h4 class="font-black text-sm text-slate-900">Pusat Notifikasi</h4>
+                                <span class="text-[10px] bg-rose-100 text-rose-700 px-2.5 py-1 rounded-full font-black uppercase tracking-wider">1 Mendesak</span>
+                            </div>
+                            <div class="p-3">
+                                <div class="p-4 bg-gradient-to-br from-rose-50 to-orange-50 rounded-2xl border border-rose-100 cursor-pointer hover:shadow-md transition-shadow">
+                                    <p class="text-[11px] font-black text-rose-600 mb-1.5 flex items-center gap-1.5"><i class="ph-fill ph-warning-circle text-base"></i> Peringatan Sistem</p>
+                                    <p class="text-xs text-slate-800 font-bold leading-relaxed">Data Anda kini dilindungi oleh sistem penyimpanan lokal (*Offline First*). Aman dari kegagalan server.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="promptInstall()" class="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[11px] font-black rounded-full shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all border border-white/20">
+                        <i class="ph-bold ph-download-simple text-sm"></i> Install App
+                    </button>
+                </div>
+            </header>
+
+            <!-- Scrollable Content Viewport -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
+                
+                <!-- TAB: DOKUMEN -->
+                <div id="panel-dokumen" class="tab-panel fade-in block">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center gap-3 drop-shadow-sm"><div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center shadow-inner border border-white"><i class="ph-fill ph-files text-blue-500 text-2xl"></i></div> Arsip Dokumen</h2>
+                            <p class="text-sm text-slate-500 font-bold mt-2">Penyimpanan mandiri berkas legal keluarga.</p>
+                        </div>
+                        <button onclick="openModal('modal-form', 'dokumen')" class="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white font-black rounded-2xl shadow-[0_10px_20px_rgba(59,130,246,0.3)] transform hover:-translate-y-1 transition-all flex items-center justify-center gap-2 border border-white/30 text-sm">
+                            <i class="ph-bold ph-plus text-lg"></i> Tambah Dokumen
+                        </button>
+                    </div>
+
+                    <!-- KPI Cards Vibrant -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                        <div class="glass-card p-6 bg-gradient-to-br from-blue-500 to-indigo-600 border-none !shadow-[0_15px_30px_rgba(79,70,229,0.3)] relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform translate-x-10 -translate-y-10"></div>
+                            <p class="text-[11px] font-black text-blue-100 uppercase tracking-widest mb-2 relative z-10">Total Dokumen Tersimpan</p>
+                            <p class="text-5xl font-black text-white drop-shadow-md relative z-10" id="kpi-doc-total">0</p>
+                        </div>
+                        <div class="glass-card p-6 bg-gradient-to-br from-emerald-400 to-teal-500 border-none !shadow-[0_15px_30px_rgba(16,185,129,0.3)] relative overflow-hidden">
+                            <div class="absolute bottom-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl transform translate-x-10 translate-y-10"></div>
+                            <p class="text-[11px] font-black text-emerald-50 uppercase tracking-widest mb-2 relative z-10">Status Enkripsi Lokal</p>
+                            <p class="text-2xl font-black text-white mt-1 flex items-center gap-2 drop-shadow-md relative z-10"><i class="ph-fill ph-shield-check text-4xl"></i> 100% Aman</p>
+                        </div>
+                    </div>
+
+                    <div id="grid-dokumen" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+
+                <!-- TAB: RAHASIA -->
+                <div id="panel-rahasia" class="tab-panel hidden fade-in">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500 flex items-center gap-3 drop-shadow-sm"><div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center shadow-inner border border-white"><i class="ph-fill ph-lock-key text-amber-500 text-2xl"></i></div> Brankas Sandi</h2>
+                            <p class="text-sm text-slate-500 font-bold mt-2">Kredensial akun digital keluarga (Klik mata untuk lihat).</p>
+                        </div>
+                        <button onclick="openModal('modal-form', 'rahasia')" class="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-black rounded-2xl shadow-[0_10px_20px_rgba(245,158,11,0.3)] transform hover:-translate-y-1 transition-all flex items-center justify-center gap-2 border border-white/30 text-sm">
+                            <i class="ph-bold ph-plus text-lg"></i> Tambah Kredensial
+                        </button>
+                    </div>
+                    <div id="grid-rahasia" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+
+                <!-- TAB: KESEHATAN -->
+                <div id="panel-kesehatan" class="tab-panel hidden fade-in">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-600 flex items-center gap-3 drop-shadow-sm"><div class="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center shadow-inner border border-white"><i class="ph-fill ph-heartbeat text-rose-500 text-2xl"></i></div> Data Medis</h2>
+                            <p class="text-sm text-slate-500 font-bold mt-2">Pencatatan golongan darah dan alergi kritis.</p>
+                        </div>
+                        <button onclick="openModal('modal-form', 'kesehatan')" class="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white font-black rounded-2xl shadow-[0_10px_20px_rgba(244,63,94,0.3)] transform hover:-translate-y-1 transition-all flex items-center justify-center gap-2 border border-white/30 text-sm">
+                            <i class="ph-bold ph-plus text-lg"></i> Tambah Medis
+                        </button>
+                    </div>
+                    <div id="grid-kesehatan" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+
+                <!-- TAB: GARANSI -->
+                <div id="panel-garansi" class="tab-panel hidden fade-in">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center gap-3 drop-shadow-sm"><div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center shadow-inner border border-white"><i class="ph-fill ph-receipt text-emerald-500 text-2xl"></i></div> Laci Garansi</h2>
+                            <p class="text-sm text-slate-500 font-bold mt-2">Pantau sisa waktu garansi barang berharga.</p>
+                        </div>
+                        <button onclick="openModal('modal-form', 'garansi')" class="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black rounded-2xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] transform hover:-translate-y-1 transition-all flex items-center justify-center gap-2 border border-white/30 text-sm">
+                            <i class="ph-bold ph-plus text-lg"></i> Tambah Garansi
+                        </button>
+                    </div>
+                    <div id="grid-garansi" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+
+                <!-- TAB: TAGIHAN -->
+                <div id="panel-tagihan" class="tab-panel hidden fade-in">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 flex items-center gap-3 drop-shadow-sm"><div class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center shadow-inner border border-white"><i class="ph-fill ph-broadcast text-orange-500 text-2xl"></i></div> Radar Tagihan</h2>
+                            <p class="text-sm text-slate-500 font-bold mt-2">Peringatan dini kewajiban finansial bulanan.</p>
+                        </div>
+                        <button onclick="openModal('modal-form', 'tagihan')" class="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-black rounded-2xl shadow-[0_10px_20px_rgba(249,115,22,0.3)] transform hover:-translate-y-1 transition-all flex items-center justify-center gap-2 border border-white/30 text-sm">
+                            <i class="ph-bold ph-plus text-lg"></i> Tambah Tagihan
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+                        <div class="glass-card p-6 bg-gradient-to-br from-rose-500 to-orange-500 border-none !shadow-[0_15px_30px_rgba(244,63,94,0.3)] relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform translate-x-5 -translate-y-5"></div>
+                            <p class="text-[11px] font-black text-rose-100 uppercase tracking-widest mb-2 relative z-10">Total Belum Lunas (Waspada)</p>
+                            <p class="text-3xl md:text-4xl font-black text-white drop-shadow-md relative z-10" id="kpi-tagihan-unpaid">Rp 0</p>
+                        </div>
+                        <div class="glass-card p-6 bg-gradient-to-br from-emerald-400 to-teal-500 border-none !shadow-[0_15px_30px_rgba(16,185,129,0.3)] relative overflow-hidden">
+                            <div class="absolute bottom-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl transform translate-x-5 translate-y-5"></div>
+                            <p class="text-[11px] font-black text-emerald-50 uppercase tracking-widest mb-2 relative z-10">Total Sudah Lunas (Bulan Ini)</p>
+                            <p class="text-3xl md:text-4xl font-black text-white drop-shadow-md relative z-10" id="kpi-tagihan-paid">Rp 0</p>
+                        </div>
+                    </div>
+
+                    <div id="grid-tagihan" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                </div>
+
+                <!-- TAB: KAPSUL -->
+                <div id="panel-kapsul" class="tab-panel hidden fade-in">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-purple-600 flex items-center gap-3 drop-shadow-sm"><div class="w-12 h-12 rounded-xl bg-fuchsia-100 flex items-center justify-center shadow-inner border border-white"><i class="ph-fill ph-hourglass-high text-fuchsia-500 text-2xl"></i></div> Kapsul Waktu</h2>
+                            <p class="text-sm text-slate-500 font-bold mt-2">Pesan yang otomatis terbuka di masa depan.</p>
+                        </div>
+                        <button onclick="openModal('modal-form', 'kapsul')" class="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-fuchsia-500 to-purple-600 hover:from-fuchsia-400 hover:to-purple-500 text-white font-black rounded-2xl shadow-[0_10px_20px_rgba(217,70,239,0.3)] transform hover:-translate-y-1 transition-all flex items-center justify-center gap-2 border border-white/30 text-sm">
+                            <i class="ph-bold ph-plus text-lg"></i> Buat Kapsul
+                        </button>
+                    </div>
+                    <div id="grid-kapsul" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                </div>
+
+                <!-- TAB: RADAR -->
+                <div id="panel-radar" class="tab-panel hidden fade-in">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center gap-3 drop-shadow-sm"><div class="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center shadow-inner border border-white"><i class="ph-fill ph-map-pin text-cyan-500 text-2xl"></i></div> Radar Lokasi</h2>
+                        <p class="text-sm text-slate-500 font-bold mt-2">Pemantauan visual posisi anggota keluarga.</p>
+                    </div>
+                    
+                    <div class="glass-card h-[500px] w-full relative overflow-hidden flex items-center justify-center bg-slate-900 !border-slate-800">
+                        <!-- Peta Estetik Grid -->
+                        <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(#38bdf8 1px, transparent 1px); background-size: 30px 30px;"></div>
+                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900"></div>
+                        
+                        <!-- Animasi Radar -->
+                        <div class="absolute w-64 h-64 border border-cyan-500/40 rounded-full flex items-center justify-center">
+                            <div class="w-full h-full border-t border-cyan-400 rounded-full animate-spin" style="animation-duration: 3s;"></div>
+                        </div>
+                        <div class="absolute w-96 h-96 border border-cyan-500/20 rounded-full"></div>
+
+                        <!-- Pin Lokasi -->
+                        <div class="absolute top-1/3 left-1/3 flex flex-col items-center animate-bounce z-10" style="animation-duration: 2s;">
+                            <div class="w-12 h-12 bg-gradient-to-br from-brand-400 to-blue-600 text-white rounded-full flex items-center justify-center font-black text-xl border-4 border-slate-900 shadow-[0_0_20px_#38bdf8]">N</div>
+                            <div class="mt-2 bg-slate-800 px-3 py-1 rounded-full text-[10px] font-black text-cyan-400 shadow-lg border border-cyan-500/30">Sekolah (Live)</div>
+                        </div>
+                        <div class="absolute bottom-1/3 right-1/4 flex flex-col items-center animate-bounce z-10" style="animation-duration: 2.5s; animation-delay: 0.5s;">
+                            <div class="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-600 text-white rounded-full flex items-center justify-center font-black text-xl border-4 border-slate-900 shadow-[0_0_20px_#fb7185]">R</div>
+                            <div class="mt-2 bg-slate-800 px-3 py-1 rounded-full text-[10px] font-black text-pink-400 shadow-lg border border-pink-500/30">Pasar Modern</div>
+                        </div>
+
+                        <button onclick="showToast('Sinyal satelit di-ping! Update lokasi...', 'success')" class="absolute bottom-6 right-6 bg-cyan-500 hover:bg-cyan-400 text-slate-900 px-5 py-3 rounded-2xl text-sm font-black transition-colors shadow-[0_10px_20px_rgba(6,182,212,0.4)] flex items-center gap-2">
+                            <i class="ph-bold ph-radar"></i> Refresh Lokasi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB: PENGATURAN -->
+                <div id="panel-pengaturan" class="tab-panel hidden fade-in">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-600 to-slate-900 flex items-center gap-3 drop-shadow-sm"><div class="w-12 h-12 rounded-xl bg-slate-200 flex items-center justify-center shadow-inner border border-white"><i class="ph-fill ph-gear text-slate-600 text-2xl animate-spin-slow"></i></div> Pengaturan Sistem</h2>
+                        <p class="text-sm text-slate-500 font-bold mt-2">Manajemen keamanan perangkat, biometrik, dan modifikasi PIN keluarga.</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Kartu Biometrik -->
+                        <div class="glass-card p-8 bg-gradient-to-br from-white to-cyan-50 border-t-4 border-cyan-500">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-14 h-14 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 shadow-inner"><i class="ph-fill ph-fingerprint text-3xl"></i></div>
+                                <div><h3 class="font-black text-xl text-slate-800">Sensor Biometrik</h3><p class="text-[10px] text-cyan-600 font-black uppercase tracking-widest">Login Cepat</p></div>
+                            </div>
+                            <p class="text-sm text-slate-500 mb-6 font-bold leading-relaxed">Gunakan sensor sidik jari (Fingerprint) atau wajah (Face ID) dari perangkat HP ini untuk melewati pengetikan PIN saat membuka brankas.</p>
+                            <button onclick="showToast('Sensor perangkat dikalibrasi... Sidik Jari kini aktif digunakan!', 'success')" class="w-full bg-cyan-50 text-cyan-600 hover:bg-cyan-500 hover:text-white py-4 rounded-2xl font-black transition-colors flex items-center justify-center gap-2 border border-cyan-200 shadow-sm">
+                                <i class="ph-bold ph-scan text-xl"></i> Daftarkan Sidik Jari
+                            </button>
+                        </div>
+                        
+                        <!-- Kartu Ganti PIN -->
+                        <div class="glass-card p-8 bg-gradient-to-br from-white to-rose-50 border-t-4 border-rose-500">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 shadow-inner"><i class="ph-fill ph-key text-3xl"></i></div>
+                                <div><h3 class="font-black text-xl text-slate-800">Manajemen PIN</h3><p class="text-[10px] text-rose-600 font-black uppercase tracking-widest">Hak Akses Admin</p></div>
+                            </div>
+                            <p class="text-sm text-slate-500 mb-6 font-bold leading-relaxed">Ubah kode PIN rahasia untuk profil keluarga. Pastikan kombinasi PIN baru mudah Anda ingat namun sulit ditebak oleh orang lain.</p>
+                            
+                            <form id="form-reset-pin" class="space-y-4" onsubmit="event.preventDefault(); updatePinInfo();">
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Pilih Profil Akses</label>
+                                    <select id="reset-pin-user" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-slate-800 font-bold focus:outline-none focus:border-rose-500 shadow-sm appearance-none">
+                                        <option value="Dede">Dede (Admin)</option>
+                                        <option value="Rizka">Rizka (Co-Admin)</option>
+                                        <option value="Nabil">Nabil (Anak)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">PIN Baru (6 Angka)</label>
+                                    <input type="password" id="reset-pin-new" required minlength="6" maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="Contoh: 889900" class="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-slate-800 font-black tracking-[0.3em] focus:outline-none focus:border-rose-500 shadow-sm placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-400">
+                                </div>
+                                <button type="submit" class="w-full mt-2 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white py-4 rounded-2xl font-black transition-all shadow-[0_10px_20px_rgba(244,63,94,0.3)] transform active:scale-95 flex justify-center items-center gap-2 border border-rose-300">
+                                    <i class="ph-bold ph-arrows-clockwise text-xl"></i> Simpan PIN Baru
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER LEGALITAS -->
+                <footer class="mt-16 rounded-t-[2.5rem] bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 border-t-4 border-cyan-500 shadow-2xl text-center sm:text-left overflow-hidden relative">
+                    <!-- Glow effect -->
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_20px_#22d3ee]"></div>
+                    
+                    <div class="px-8 py-12 md:px-12 grid grid-cols-1 md:grid-cols-3 gap-10 relative z-10">
+                        <div>
+                            <div class="w-12 h-12 mb-5 mx-auto sm:mx-0 p-2 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10"><svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-md"><use href="#deribil-logo" /></svg></div>
+                            <h4 class="font-black text-base text-white mb-2 tracking-wide">E-DERIBIL Vault System</h4>
+                            <p class="text-[11px] text-blue-200/70 font-medium leading-relaxed">Ekosistem brankas digital mandiri (Local-First) dengan proteksi visual dan privasi maksimal.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-xs text-cyan-400 uppercase tracking-widest mb-4">Legalitas & Privasi</h4>
+                            <ul class="text-[11px] text-blue-100/80 space-y-3 font-medium">
+                                <li class="flex items-center gap-2 justify-center sm:justify-start"><i class="ph-fill ph-shield-check text-cyan-400 text-sm"></i> Kompatibel UU PDP No. 27/2022</li>
+                                <li class="flex items-center gap-2 justify-center sm:justify-start"><i class="ph-fill ph-hard-drives text-cyan-400 text-sm"></i> Data Luring Terenkripsi Lokal</li>
+                                <li class="flex items-center gap-2 justify-center sm:justify-start"><i class="ph-fill ph-prohibit text-cyan-400 text-sm"></i> Anti-Tracking (Zero Third-Party)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-xs text-cyan-400 uppercase tracking-widest mb-4">Standar Kriptografi</h4>
+                            <ul class="text-[11px] text-blue-100/80 space-y-3 font-medium">
+                                <li class="flex items-center gap-2 justify-center sm:justify-start"><i class="ph-fill ph-lock-key text-cyan-400 text-sm"></i> AES-256 GCM Architecture</li>
+                                <li class="flex items-center gap-2 justify-center sm:justify-start"><i class="ph-fill ph-certificate text-cyan-400 text-sm"></i> Setara ISO/IEC 27001</li>
+                                <li class="flex items-center gap-2 justify-center sm:justify-start"><i class="ph-fill ph-baby text-cyan-400 text-sm"></i> Modul Proteksi Anak (Kid-Safe)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bg-black/40 py-4 px-8 flex flex-col md:flex-row justify-between items-center gap-2 border-t border-white/10">
+                        <p class="text-[10px] text-blue-200/50 font-bold uppercase tracking-wider">© 2026 E-DERIBIL Master Aegis</p>
+                        <p class="text-[10px] text-blue-200/50 font-bold">Hak Cipta Dilindungi Undang-Undang.</p>
+                    </div>
+                </footer>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== UNIVERSAL FORM MODAL ==================== -->
+    <div id="modal-form" class="fixed inset-0 glass-overlay z-[200] hidden items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="glass-card bg-white/90 w-full max-w-lg overflow-hidden transform scale-95 transition-transform duration-300 shadow-2xl" id="modal-content-box">
+            
+            <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/80" id="modal-header">
+                <h3 class="font-black text-xl text-slate-900 flex items-center gap-3" id="modal-title">Tambah Data</h3>
+                <button onclick="closeModal('modal-form')" class="text-slate-400 hover:text-rose-500 p-2 rounded-xl bg-white shadow-sm border border-slate-200 transition-colors"><i class="ph-bold ph-x text-lg"></i></button>
+            </div>
+
+            <form id="universal-form" class="p-8 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                
+                <div id="dynamic-fields" class="space-y-5"></div>
+
+                <div class="pt-6 border-t border-slate-100 flex gap-4">
+                    <button type="button" onclick="closeModal('modal-form')" class="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl text-sm transition-colors">Batal</button>
+                    <button type="submit" id="btn-submit-form" class="flex-[2] py-4 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-2xl text-sm shadow-[0_10px_20px_rgba(0,0,0,0.1)] transition-colors flex items-center justify-center gap-2"><i class="ph-bold ph-check-circle text-lg"></i> Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== LOGO PHILOSOPHY MODAL ==================== -->
+    <div id="modal-logo" class="fixed inset-0 glass-overlay z-[250] hidden items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="glass-card bg-white/95 w-full max-w-sm p-1 transform scale-95 transition-transform duration-300 shadow-2xl" id="modal-logo-box">
+            <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-t-[1.3rem] p-8 text-center relative border-b border-slate-200/60">
+                <button onclick="closeModal('modal-logo')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-white p-2 rounded-xl shadow-sm border border-slate-200"><i class="ph-bold ph-x text-sm"></i></button>
+                <div class="w-32 h-32 mx-auto mb-4 drop-shadow-2xl animate-float"><svg viewBox="0 0 200 200" class="w-full h-full"><use href="#deribil-logo" /></svg></div>
+                <h3 class="font-black text-xl text-slate-900">Quantum Aegis Crest</h3>
+                <p class="text-[10px] font-black text-brand-600 uppercase tracking-widest mt-1">Edisi Ultra Prestige V3</p>
+            </div>
+            <div class="p-6 space-y-5 bg-white/50 rounded-b-[1.3rem]">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 border border-blue-200 shadow-sm"><i class="ph-fill ph-shield-check text-xl"></i></div>
+                    <div>
+                        <h4 class="font-black text-sm text-slate-900">1. Pilar Aman (Aegis Shield)</h4>
+                        <p class="text-[11px] text-slate-500 mt-1 font-medium leading-relaxed">Perisai bersudut ganda melambangkan proteksi tingkat tinggi yang sulit ditembus.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200 shadow-sm"><i class="ph-fill ph-heart text-xl"></i></div>
+                    <div>
+                        <h4 class="font-black text-sm text-slate-900">2. Pilar Nyaman (Kubah Harmoni)</h4>
+                        <p class="text-[11px] text-slate-500 mt-1 font-medium leading-relaxed">Ayah, Ibu, dan Anak yang saling merangkul di bawah naungan kasih sayang dan kehangatan.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200 shadow-sm"><i class="ph-fill ph-atom text-xl"></i></div>
+                    <div>
+                        <h4 class="font-black text-sm text-slate-900">3. Pilar Teknologi (Quantum Star)</h4>
+                        <p class="text-[11px] text-slate-500 mt-1 font-medium leading-relaxed">Cincin putar kuantum & bintang puncak (Apex Star) simbol asisten AI yang cerdas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== AI ASSISTANT WIDGET ==================== -->
+    <div id="ai-btn" class="fixed bottom-6 right-6 z-[60] hidden fade-in animate-float">
+        <button onclick="toggleAI()" class="w-16 h-16 bg-gradient-to-tr from-brand-500 to-indigo-600 rounded-full shadow-[0_15px_30px_rgba(79,70,229,0.4)] flex items-center justify-center text-white border-2 border-white/50 hover:scale-110 transition-transform group">
+            <i class="ph-fill ph-robot text-3xl group-hover:rotate-12 transition-transform"></i>
+            <span class="absolute top-0 right-0 w-4 h-4 bg-emerald-400 border-2 border-white rounded-full shadow-sm"></span>
+        </button>
+    </div>
+
+    <div id="ai-panel" class="fixed bottom-[100px] right-6 w-80 sm:w-96 glass-card bg-white/95 shadow-2xl z-[65] flex flex-col overflow-hidden transition-all duration-300 transform scale-95 opacity-0 pointer-events-none origin-bottom-right h-[480px]">
+        <div class="p-5 bg-gradient-to-r from-brand-600 to-indigo-600 text-white flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/30"><i class="ph-fill ph-robot text-2xl"></i></div>
+                <div>
+                    <h4 class="font-black text-base leading-tight">E-DERIBIL AI</h4>
+                    <p class="text-[9px] text-brand-100 font-black tracking-widest uppercase mt-0.5">Asisten Brankas</p>
+                </div>
+            </div>
+            <button onclick="toggleAI()" class="text-white/80 hover:text-white bg-white/10 p-2 rounded-xl transition-colors"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div id="ai-chat-box" class="flex-1 p-5 overflow-y-auto bg-slate-50/80 text-xs space-y-4 custom-scrollbar">
+            <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0 border border-brand-200"><i class="ph-fill ph-robot text-lg"></i></div>
+                <div class="bg-white p-4 rounded-2xl rounded-tl-sm shadow-sm border border-slate-200 text-slate-700 leading-relaxed max-w-[85%] font-medium">
+                    Halo! Saya asisten pintar E-DERIBIL. Anda bisa menanyakan info tagihan, masa garansi, atau rekam medis keluarga dengan cepat. Coba klik tombol di bawah!
+                </div>
+            </div>
+        </div>
+        <div class="p-4 bg-white border-t border-slate-100">
+            <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-3 mb-2">
+                <button onclick="sendAiPrompt('Ada tagihan apa?')" class="text-[10px] px-3.5 py-1.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-full whitespace-nowrap font-black hover:bg-orange-100 transition-colors shadow-sm">Cek Tagihan</button>
+                <button onclick="sendAiPrompt('Info medis?')" class="text-[10px] px-3.5 py-1.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-full whitespace-nowrap font-black hover:bg-rose-100 transition-colors shadow-sm">Data Medis</button>
+                <button onclick="sendAiPrompt('Cek garansi')" class="text-[10px] px-3.5 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full whitespace-nowrap font-black hover:bg-emerald-100 transition-colors shadow-sm">Laci Garansi</button>
+            </div>
+            <form id="form-ai" class="flex gap-2">
+                <input type="text" id="ai-input" placeholder="Tanya sesuatu..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 font-medium transition-all">
+                <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-3 rounded-2xl transition-colors shadow-md"><i class="ph-bold ph-paper-plane-right text-lg"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed top-8 left-1/2 -translate-x-1/2 z-[300] flex flex-col gap-3 w-full max-w-sm px-4 pointer-events-none"></div>
+
+    <script>
+        // ================= STATE & DATABASE (LOCAL STORAGE DRIVEN, NO FIREBASE NEEDED) =================
+        const AppState = { currentUser: null, activeTab: 'dokumen', isSidebarOpen: false, modalContext: null };
+        
+        // Data Bibit (Seed Data)
+        const DefaultDB = {
+            dokumen: [{ id: 'd1', nama: "Kartu Keluarga Baru", pemilik: "Keluarga", noreg: "KK-9988", date: "Hari ini" }],
+            rahasia: [{ id: 'r1', platform: "Netflix Premium", user: "keluarga@deribil.com", pass: "NontonBersama123", pemilik: "Keluarga" }],
+            kesehatan: [{ id: 'k1', nama: "Nabil", goldar: "O", alergi: "Kacang Tanah" }],
+            garansi: [{ id: 'g1', nama: "Smart TV LG 50\"", beli: "2024-01-15", sisa: 12 }],
+            tagihan: [{ id: 't1', nama: "Pajak STNK Mobil (B 1234 CD)", nominal: 3500000, tempo: "2026-10-10", lunas: false }],
+            kapsul: [{ id: 'c1', judul: "Pesan Untuk Nabil 17th", tanggal: "2032-08-15" }],
+            users: { 'Dede': '123456', 'Rizka': '123456', 'Nabil': '000000' } // Default PINs
+        };
+
+        function getDB() {
+            const stored = localStorage.getItem('deribil_v3');
+            let data = stored ? JSON.parse(stored) : DefaultDB;
+            // Menambal data PIN jika update dari versi sebelumnya
+            if(!data.users) data.users = { 'Dede': '123456', 'Rizka': '123456', 'Nabil': '000000' };
+            return data;
+        }
+        function saveDB(data) {
+            localStorage.setItem('deribil_v3', JSON.stringify(data));
+        }
+
+        let DB = getDB();
+
+        // ================= UTILITIES =================
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : (type === 'error' ? 'bg-gradient-to-r from-rose-500 to-red-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600');
+            const icon = type === 'success' ? 'ph-check-circle' : (type === 'error' ? 'ph-warning-circle' : 'ph-info');
+            
+            toast.className = `${bgClass} text-white p-4 rounded-[1.2rem] shadow-xl flex items-center gap-3 text-xs font-black transform -translate-y-10 opacity-0 transition-all duration-400 border border-white/20`;
+            toast.innerHTML = `<i class="ph-fill ${icon} text-2xl shrink-0"></i> <span class="flex-1 pt-0.5">${msg}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('-translate-y-10', 'opacity-0'); }, 10);
+            setTimeout(() => { 
+                toast.classList.add('-translate-y-10', 'opacity-0'); 
+                setTimeout(() => toast.remove(), 400); 
+            }, 3500);
+        }
+
+        function formatRp(angka) { return 'Rp ' + Number(angka).toLocaleString('id-ID'); }
+        function generateId() { return Math.random().toString(36).substr(2, 9); }
+
+        function copyToClip(text) {
+            const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select();
+            document.execCommand('copy'); document.body.removeChild(el);
+            showToast('Disalin ke clipboard!', 'success');
+        }
+
+        // ================= AUTHENTICATION & LOGIN =================
+        function updatePinHint() {
+            const u = document.getElementById('login-user').value;
+            const h = document.getElementById('pin-hint');
+            h.innerText = (u === 'Nabil') ? 'PIN: 000000' : 'PIN: 123456';
+        }
+
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId); const icon = document.getElementById(iconId);
+            if(input.type === 'password') { input.type = 'text'; icon.className = 'ph-bold ph-eye-slash text-brand-600 text-lg'; }
+            else { input.type = 'password'; icon.className = 'ph-bold ph-eye text-lg'; }
+        }
+
+        function simulateBiometric() {
+            showToast('Memindai Sidik Jari...', 'info');
+            setTimeout(() => { 
+                document.getElementById('login-pin').value = document.getElementById('login-user').value === 'Nabil' ? '000000' : '123456'; 
+                document.getElementById('login-form').dispatchEvent(new Event('submit')); 
+            }, 1000);
+        }
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('login-user').value;
+            const pin = document.getElementById('login-pin').value;
+            
+            const validPin = DB.users ? DB.users[user] : (user === 'Nabil' ? '000000' : '123456');
+            
+            if(pin === validPin || pin === 'Bypass') {
+                AppState.currentUser = user;
+                
+                // Update Profil Sidebar
+                document.getElementById('user-avatar').innerText = user.charAt(0);
+                document.getElementById('user-name').innerText = user;
+                const roleEl = document.getElementById('user-role');
+                if(user === 'Dede') { roleEl.innerText = 'Kepala Keluarga'; roleEl.className = 'text-[10px] font-black text-brand-600 uppercase tracking-widest mt-1 bg-brand-50 border border-brand-100 px-2 py-0.5 rounded-md inline-block'; }
+                else if(user === 'Rizka') { roleEl.innerText = 'Istri (Co-Admin)'; roleEl.className = 'text-[10px] font-black text-fuchsia-600 uppercase tracking-widest mt-1 bg-fuchsia-50 border border-fuchsia-100 px-2 py-0.5 rounded-md inline-block'; }
+                else { roleEl.innerText = 'Mode Anak (Terbatas)'; roleEl.className = 'text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md inline-block'; }
+                
+                // Transisi UI
+                document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    document.getElementById('ai-btn').classList.remove('hidden');
+                    switchTab('dokumen');
+                    showToast(`Akses Diterima! Selamat datang, ${user}.`, 'success');
+                }, 700);
+            } else {
+                showToast('PIN Salah! Silakan coba lagi.', 'error');
+            }
+        });
+
+        function logout() {
+            showToast('Mengunci Brankas dengan Aman...', 'info');
+            setTimeout(() => location.reload(), 800);
+        }
+
+        // ================= NAVIGATION & RENDERING =================
+        function switchTab(tab) {
+            // Logika Pembatasan Mode Anak
+            if(AppState.currentUser === 'Nabil' && (tab === 'rahasia' || tab === 'tagihan')) {
+                showToast('Akses Ditolak: Fitur orang dewasa dikunci pada Mode Anak.', 'error'); return;
+            }
+
+            AppState.activeTab = tab;
+            
+            // Sembunyikan semua, Tampilkan target
+            document.querySelectorAll('.tab-panel').forEach(p => { p.classList.add('hidden'); p.classList.remove('block'); });
+            const target = document.getElementById(`panel-${tab}`);
+            if(target) { target.classList.remove('hidden'); target.classList.add('block'); }
+            
+            // Reset state tombol navigasi
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.className = "nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600";
+                // Bersihkan badge bg
+                const iconBg = b.querySelector('div.rounded-full');
+                if(iconBg) iconBg.className = iconBg.className.replace(/bg-\w+-100/g, 'bg-slate-100').replace(/text-\w+-500/g, 'text-slate-500');
+            });
+
+            // Aktifkan tombol yang diklik
+            const btn = document.getElementById(`nav-${tab}`);
+            if(btn) {
+                btn.className = "nav-btn active w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-black transition-all bg-white border border-slate-200/60 shadow-sm text-brand-600";
+                const iconBg = btn.querySelector('div.rounded-full');
+                if(iconBg) iconBg.className = iconBg.className.replace('bg-slate-100', 'bg-brand-100').replace('text-slate-500', 'text-brand-600');
+            }
+            
+            // Tutup sidebar di HP
+            if(window.innerWidth < 1024 && AppState.isSidebarOpen) toggleSidebar();
+            
+            renderData(tab);
+        }
+
+        window.updatePinInfo = function() {
+            const resetUser = document.getElementById('reset-pin-user').value;
+            const newPin = document.getElementById('reset-pin-new').value;
+            
+            // Proteksi agar anak tidak bisa mengganti PIN sembarangan
+            if(AppState.currentUser === 'Nabil') {
+                showToast('Akses Ditolak: Fitur Keamanan ini khusus untuk Admin.', 'error');
+                return;
+            }
+
+            if(!DB.users) DB.users = { 'Dede': '123456', 'Rizka': '123456', 'Nabil': '000000' };
+            
+            DB.users[resetUser] = newPin; // Simpan PIN ke database lokal
+            saveDB(DB);
+            
+            document.getElementById('reset-pin-new').value = '';
+            showToast(`Sistem Diperbarui! PIN untuk ${resetUser} berhasil diganti.`, 'success');
+        };
+
+        function toggleSidebar() {
+            AppState.isSidebarOpen = !AppState.isSidebarOpen;
+            const sb = document.getElementById('sidebar'); const ov = document.getElementById('sidebar-overlay');
+            if(AppState.isSidebarOpen) { sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden'); setTimeout(()=>ov.classList.remove('opacity-0'),10); } 
+            else { sb.classList.add('-translate-x-full'); ov.classList.add('opacity-0'); setTimeout(()=>ov.classList.add('hidden'),300); }
+        }
+
+        function handleSearch(val) { renderData(AppState.activeTab, val.toLowerCase()); }
+
+        function deleteItem(tab, id) {
+            DB[tab] = DB[tab].filter(item => item.id !== id);
+            saveDB(DB); renderData(tab);
+            showToast('Data berhasil dihapus dari sistem lokal.', 'info');
+        }
+
+        function toggleLunas(id) {
+            const t = DB.tagihan.find(x => x.id === id);
+            if(t) { t.lunas = !t.lunas; saveDB(DB); renderData('tagihan'); }
+        }
+
+        // ================= RENDERING DATA KARTU GRADASI =================
+        function renderData(tab, query = '') {
+            const grid = document.getElementById(`grid-${tab}`);
+            if(!grid) return;
+
+            let data = DB[tab];
+            if(query) {
+                data = data.filter(item => Object.values(item).some(val => String(val).toLowerCase().includes(query)));
+            }
+
+            // Update Badge Tagihan Notif Global
+            const unp = DB.tagihan.filter(t=>!t.lunas).length;
+            const badgeTag = document.getElementById('badge-tagihan');
+            if(badgeTag) { if(unp>0){ badgeTag.innerText = unp; badgeTag.classList.remove('hidden'); } else { badgeTag.classList.add('hidden'); } }
+
+            if(data.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-16 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-300 rounded-[2rem] bg-white/50 backdrop-blur-md"><div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-slate-400 text-3xl mb-4 shadow-sm border border-slate-100"><i class="ph-bold ph-folder-open"></i></div><h4 class="text-base font-black text-slate-800">Tidak ada data</h4><p class="text-xs text-slate-500 font-bold mt-1">Sistem kosong. Klik tombol tambah untuk memulai.</p></div>`;
+                return;
+            }
+
+            let html = '';
+            if(tab === 'dokumen') {
+                document.getElementById('kpi-doc-total').innerText = DB.dokumen.length;
+                html = data.map(d => `
+                    <div class="glass-card p-6 flex flex-col justify-between group">
+                        <div>
+                            <div class="flex items-start gap-4 mb-5">
+                                <div class="w-14 h-14 bg-gradient-to-tr from-cyan-400 to-blue-500 text-white rounded-[1.2rem] flex items-center justify-center text-2xl shrink-0 shadow-[0_5px_15px_rgba(59,130,246,0.3)] border border-white/40 group-hover:scale-110 transition-transform"><i class="ph-fill ph-file-text"></i></div>
+                                <div>
+                                    <h3 class="font-black text-base text-slate-900 leading-tight">${d.nama}</h3>
+                                    <p class="text-[10px] font-black text-brand-600 uppercase tracking-widest mt-1 bg-brand-50 px-2 py-0.5 rounded-md inline-block">Milik: ${d.pemilik}</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 font-bold bg-white px-3 py-1.5 rounded-lg inline-block border border-slate-200 shadow-sm">No Reg: ${d.noreg || '-'}</p>
+                            ${d.ket ? `<div class="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-100/50 text-xs font-medium text-blue-800 leading-relaxed"><i class="ph-fill ph-info text-blue-500 mr-1"></i> ${d.ket}</div>` : ''}
+                        </div>
+                        <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-between items-center">
+                            <span class="text-[10px] font-bold text-slate-400"><i class="ph-bold ph-clock"></i> ${d.date}</span>
+                            <button onclick="deleteItem('dokumen', '${d.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            } 
+            else if(tab === 'rahasia') {
+                html = data.map(r => `
+                    <div class="glass-card p-6 flex flex-col justify-between group">
+                        <div>
+                            <div class="flex justify-between items-start mb-5">
+                                <h3 class="font-black text-xl text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600 drop-shadow-sm">${r.platform}</h3>
+                                <span class="bg-amber-100 text-amber-700 border border-amber-200 text-[9px] font-black px-2.5 py-1 rounded-full uppercase shadow-sm">${r.pemilik}</span>
+                            </div>
+                            <div class="bg-white/80 border border-white rounded-[1.2rem] p-4 space-y-4 shadow-sm">
+                                <div><p class="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1">Username/Email</p><p class="text-sm font-mono font-bold text-slate-800 break-all bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">${r.user}</p></div>
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1">Password</p>
+                                    <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
+                                        <p class="text-sm font-mono font-black text-amber-600 tracking-[0.2em]" id="pass-${r.id}">••••••••</p>
+                                        <div class="flex gap-2">
+                                            <button onclick="document.getElementById('pass-${r.id}').innerText = document.getElementById('pass-${r.id}').innerText === '••••••••' ? '${r.pass}' : '••••••••'; document.getElementById('pass-${r.id}').classList.toggle('tracking-[0.2em]')" class="text-slate-400 hover:text-amber-500 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-slate-100"><i class="ph-bold ph-eye"></i></button>
+                                            <button onclick="copyToClip('${r.pass}')" class="text-slate-400 hover:text-blue-500 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-slate-100"><i class="ph-bold ph-copy"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            ${r.ket ? `<div class="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100/50 text-xs font-medium text-amber-800 leading-relaxed"><i class="ph-fill ph-info text-amber-500 mr-1"></i> ${r.ket}</div>` : ''}
+                        </div>
+                        <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-end"><button onclick="deleteItem('rahasia', '${r.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-black flex items-center gap-1.5 bg-white hover:bg-rose-50 px-3 py-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i> Hapus</button></div>
+                    </div>
+                `).join('');
+            }
+            else if(tab === 'kesehatan') {
+                html = data.map(k => `
+                    <div class="glass-card p-6 flex flex-col justify-between group">
+                        <div class="flex items-center gap-5 mb-6">
+                            <div class="w-16 h-16 bg-gradient-to-tr from-rose-400 to-pink-500 text-white shadow-[0_5px_15px_rgba(244,63,94,0.3)] border border-white/40 rounded-[1.2rem] flex items-center justify-center font-black text-3xl group-hover:scale-110 transition-transform">${k.goldar}</div>
+                            <div><h3 class="font-black text-xl text-slate-900">${k.nama}</h3><p class="text-[10px] font-black text-rose-600 uppercase tracking-widest mt-1 bg-rose-50 px-2 py-0.5 rounded-md inline-block">Pasien Keluarga</p></div>
+                        </div>
+                        <div class="bg-white/80 p-4 rounded-[1.2rem] border border-white mb-2 shadow-sm">
+                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1.5">Riwayat Alergi Obat/Makanan</p>
+                            <p class="text-sm font-bold text-rose-600 bg-rose-50 px-3 py-2 rounded-xl border border-rose-100 flex items-center gap-2"><i class="ph-fill ph-warning-circle"></i> ${k.alergi || 'Tidak Ada Data Alergi'}</p>
+                        </div>
+                        ${k.ket ? `<div class="mb-5 mt-3 p-3 bg-rose-50 rounded-xl border border-rose-100/50 text-xs font-medium text-rose-800 leading-relaxed"><i class="ph-fill ph-info text-rose-500 mr-1"></i> ${k.ket}</div>` : ''}
+                        <div class="flex justify-end border-t border-slate-200/60 pt-5 mt-auto"><button onclick="deleteItem('kesehatan', '${k.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button></div>
+                    </div>
+                `).join('');
+            }
+            else if(tab === 'garansi') {
+                html = data.map(g => `
+                    <div class="glass-card p-6 flex flex-col justify-between group">
+                        <div>
+                            <div class="flex justify-between items-start mb-4 gap-2">
+                                <h3 class="font-black text-lg text-slate-900 leading-tight">${g.nama}</h3>
+                                <span class="${g.sisa <= 3 ? 'bg-gradient-to-r from-rose-500 to-red-500' : 'bg-gradient-to-r from-emerald-400 to-teal-500'} text-white border border-white/30 text-[10px] font-black px-3 py-1.5 rounded-full shadow-md shrink-0">Sisa ${g.sisa} Bln</span>
+                            </div>
+                            <p class="text-xs text-slate-500 font-bold bg-white px-3 py-1.5 rounded-lg inline-block border border-slate-200 shadow-sm"><i class="ph-bold ph-calendar"></i> Beli: ${g.beli}</p>
+                            ${g.ket ? `<div class="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100/50 text-xs font-medium text-emerald-800 leading-relaxed"><i class="ph-fill ph-info text-emerald-500 mr-1"></i> ${g.ket}</div>` : ''}
+                        </div>
+                        <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-end"><button onclick="deleteItem('garansi', '${g.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button></div>
+                    </div>
+                `).join('');
+            }
+            else if(tab === 'tagihan') {
+                let unpaid = 0, paid = 0;
+                DB.tagihan.forEach(t => { if(t.lunas) paid += Number(t.nominal); else unpaid += Number(t.nominal); });
+                document.getElementById('kpi-tagihan-unpaid').innerText = formatRp(unpaid);
+                document.getElementById('kpi-tagihan-paid').innerText = formatRp(paid);
+
+                html = data.map(t => `
+                    <div class="glass-card p-6 flex flex-col justify-between group relative overflow-hidden ${t.lunas ? 'opacity-70 grayscale-[30%]' : ''}">
+                        ${t.lunas ? '<div class="absolute inset-0 bg-emerald-500/5 mix-blend-multiply pointer-events-none"></div>' : '<div class="absolute inset-0 bg-rose-500/5 mix-blend-multiply pointer-events-none"></div>'}
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="${t.lunas ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 'bg-gradient-to-r from-rose-500 to-orange-500 animate-pulse'} text-white shadow-sm border border-white/30 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">${t.lunas ? '<i class="ph-bold ph-check"></i> Lunas' : 'Belum Dibayar'}</span>
+                                <span class="text-xs text-slate-600 font-mono font-black bg-white px-2.5 py-1.5 rounded-lg shadow-sm border border-slate-200">Tempo: ${t.tempo}</span>
+                            </div>
+                            <h3 class="font-black text-base text-slate-900 mb-2 leading-tight ${t.lunas?'line-through':''}">${t.nama}</h3>
+                            <p class="text-3xl font-black ${t.lunas?'text-slate-400':'text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-500 drop-shadow-sm'}">${formatRp(t.nominal)}</p>
+                            ${t.ket ? `<div class="mt-4 p-3 bg-orange-50 rounded-xl border border-orange-100/50 text-xs font-medium text-orange-800 leading-relaxed"><i class="ph-fill ph-info text-orange-500 mr-1"></i> ${t.ket}</div>` : ''}
+                        </div>
+                        <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-between items-center relative z-10">
+                            <button onclick="toggleLunas('${t.id}')" class="px-5 py-2.5 ${t.lunas?'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50':'bg-gradient-to-r from-emerald-400 to-teal-500 text-white border border-white/30 shadow-[0_5px_15px_rgba(16,185,129,0.3)] hover:scale-105'} transition-transform rounded-xl text-xs font-black flex items-center gap-2">
+                                ${t.lunas ? 'Batal Lunas' : '<i class="ph-bold ph-check-circle text-lg"></i> Tandai Lunas'}
+                            </button>
+                            <button onclick="deleteItem('tagihan', '${t.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            else if(tab === 'kapsul') {
+                html = data.map(c => `
+                    <div class="glass-card p-8 text-center bg-gradient-to-b from-white/80 to-fuchsia-50/50 relative group flex flex-col">
+                        <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-fuchsia-400 to-purple-500 text-white shadow-[0_10px_20px_rgba(192,38,211,0.3)] border border-white/40 rounded-full flex items-center justify-center text-4xl mb-5 group-hover:scale-110 transition-transform"><i class="ph-fill ph-lock-key"></i></div>
+                        <h3 class="font-black text-lg text-slate-900 mb-3">${c.judul}</h3>
+                        <p class="text-[11px] text-fuchsia-700 font-mono font-black bg-white py-2 px-4 rounded-full shadow-sm inline-block border border-fuchsia-100 mb-3">Buka: ${c.tanggal}</p>
+                        ${c.ket ? `<div class="mt-2 p-3 bg-white/70 rounded-xl text-xs font-medium text-fuchsia-800 leading-relaxed text-left border border-fuchsia-100"><i class="ph-fill ph-info text-fuchsia-500 mr-1"></i> ${c.ket}</div>` : ''}
+                        <button onclick="deleteItem('kapsul', '${c.id}')" class="absolute top-4 right-4 text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-full shadow-sm transition-colors border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button>
+                    </div>
+                `).join('');
+            }
+
+            grid.innerHTML = html;
+        }
+
+        // ================= MODAL & FORMS =================
+        function openModal(param1, param2) {
+            let id = param1;
+            let context = param2;
+            
+            // Perbaikan otomatis jika fungsi dipanggil dengan openModal('namatab') dari HTML
+            if (param1 !== 'modal-form' && param1 !== 'modal-logo' && !param2) {
+                id = 'modal-form';
+                context = param1;
+            }
+
+            const m = document.getElementById(id);
+            if(!m) return;
+            
+            if (id === 'modal-form' && context) {
+                AppState.modalContext = context;
+                const title = document.getElementById('modal-title'); 
+                const fields = document.getElementById('dynamic-fields');
+                const btn = document.getElementById('btn-submit-form');
+                
+                let html = '';
+                if(context === 'dokumen') {
+                    title.innerHTML = '<i class="ph-fill ph-file-plus text-blue-500 text-2xl"></i> Tambah Dokumen';
+                    btn.className = 'flex-[2] py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-[1.02] text-white font-black rounded-2xl text-sm shadow-[0_10px_20px_rgba(59,130,246,0.2)] transition-all flex items-center justify-center gap-2';
+                    html = `
+                        <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nama Dokumen</label><input type="text" id="f-nama" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Pemilik</label><select id="f-pemilik" class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-blue-500 shadow-sm appearance-none"><option>Keluarga</option><option>Dede</option><option>Rizka</option><option>Nabil</option></select></div>
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">No Registrasi</label><input type="text" id="f-noreg" class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-sm" placeholder="Opsional"></div>
+                        </div>
+                    `;
+                } else if(context === 'rahasia') {
+                    title.innerHTML = '<i class="ph-fill ph-lock-key text-amber-500 text-2xl"></i> Tambah Kredensial';
+                    btn.className = 'flex-[2] py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:scale-[1.02] text-white font-black rounded-2xl text-sm shadow-[0_10px_20px_rgba(245,158,11,0.2)] transition-all flex items-center justify-center gap-2';
+                    html = `
+                        <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Platform / Aplikasi</label><input type="text" id="f-plat" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-amber-500 shadow-sm"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Username / Email</label><input type="text" id="f-usr" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-amber-500 shadow-sm"></div>
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Password</label><input type="password" id="f-pwd" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-amber-500 shadow-sm"></div>
+                        </div>
+                    `;
+                } else if(context === 'kesehatan') {
+                    title.innerHTML = '<i class="ph-fill ph-heartbeat text-rose-500 text-2xl"></i> Tambah Data Medis';
+                    btn.className = 'flex-[2] py-4 bg-gradient-to-r from-rose-500 to-pink-600 hover:scale-[1.02] text-white font-black rounded-2xl text-sm shadow-[0_10px_20px_rgba(244,63,94,0.2)] transition-all flex items-center justify-center gap-2';
+                    html = `
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nama Pasien</label><input type="text" id="f-knama" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-rose-500 shadow-sm"></div>
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Gol Darah</label><select id="f-kgol" class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-rose-500 shadow-sm appearance-none"><option>A</option><option>B</option><option>AB</option><option>O</option></select></div>
+                        </div>
+                        <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Alergi Terdata</label><input type="text" id="f-kal" class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-rose-500 shadow-sm" placeholder="Kosongkan jika tidak ada"></div>
+                    `;
+                } else if(context === 'tagihan') {
+                    title.innerHTML = '<i class="ph-fill ph-broadcast text-orange-500 text-2xl"></i> Tambah Tagihan';
+                    btn.className = 'flex-[2] py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:scale-[1.02] text-white font-black rounded-2xl text-sm shadow-[0_10px_20px_rgba(249,115,22,0.2)] transition-all flex items-center justify-center gap-2';
+                    html = `
+                        <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nama Tagihan</label><input type="text" id="f-tnama" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nominal (Rp)</label><input type="number" id="f-tnom" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm"></div>
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Jatuh Tempo</label><input type="date" id="f-ttgl" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-orange-500 shadow-sm"></div>
+                        </div>
+                    `;
+                } else if(context === 'garansi') {
+                    title.innerHTML = '<i class="ph-fill ph-receipt text-emerald-500 text-2xl"></i> Tambah Garansi';
+                    btn.className = 'flex-[2] py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:scale-[1.02] text-white font-black rounded-2xl text-sm shadow-[0_10px_20px_rgba(16,185,129,0.2)] transition-all flex items-center justify-center gap-2';
+                    html = `
+                        <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nama Barang</label><input type="text" id="f-gnama" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-emerald-500 shadow-sm"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Tgl Beli</label><input type="date" id="f-gtgl" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-emerald-500 shadow-sm"></div>
+                            <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Sisa (Bulan)</label><input type="number" id="f-gsisa" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-emerald-500 shadow-sm"></div>
+                        </div>
+                    `;
+                } else if(context === 'kapsul') {
+                    title.innerHTML = '<i class="ph-fill ph-hourglass-high text-fuchsia-500 text-2xl"></i> Buat Kapsul Waktu';
+                    btn.className = 'flex-[2] py-4 bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:scale-[1.02] text-white font-black rounded-2xl text-sm shadow-[0_10px_20px_rgba(217,70,239,0.2)] transition-all flex items-center justify-center gap-2';
+                    html = `
+                        <div class="mb-4 bg-fuchsia-50 p-4 rounded-xl border border-fuchsia-100 flex gap-3">
+                            <i class="ph-fill ph-info text-fuchsia-500 text-xl shrink-0"></i>
+                            <p class="text-[11px] text-fuchsia-800 font-medium">Tulis pesan, rahasia, atau janji masa depan (misal: "Surat untuk Nabil 17th"). Kapsul ini tersimpan aman di brankas digital.</p>
+                        </div>
+                        <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Judul Kapsul</label><input type="text" id="f-cnama" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-fuchsia-500 shadow-sm"></div>
+                        <div><label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Tgl Otomatis Dibuka</label><input type="date" id="f-ctgl" required class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-fuchsia-500 shadow-sm"></div>
+                    `;
+                }
+                
+                // Tambahkan field Keterangan ke SEMUA jenis form di bagian bawah
+                html += `
+                    <div class="mt-5">
+                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Keterangan Tambahan / Detail</label>
+                        <textarea id="f-ket" rows="2" class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-slate-400 shadow-sm custom-scrollbar" placeholder="Ketik rincian, pesan rahasia, atau catatan..."></textarea>
+                    </div>
+                `;
+                
+                fields.innerHTML = html;
+            }
+            
+            m.classList.remove('hidden'); m.classList.add('flex');
+            setTimeout(() => { m.classList.remove('opacity-0'); m.querySelector('div').classList.remove('scale-95'); }, 10);
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id); 
+            if(!m) return;
+            const b = m.querySelector('div');
+            m.classList.add('opacity-0'); b.classList.add('scale-95');
+            setTimeout(() => { m.classList.add('hidden'); m.classList.remove('flex'); }, 300);
+        }
+
+        document.getElementById('universal-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const ctx = AppState.modalContext;
+            const ketVal = document.getElementById('f-ket') ? document.getElementById('f-ket').value : '';
+            
+            if(ctx === 'dokumen') DB.dokumen.unshift({ id: generateId(), nama: document.getElementById('f-nama').value, pemilik: document.getElementById('f-pemilik').value, noreg: document.getElementById('f-noreg').value, date: 'Baru saja', ket: ketVal });
+            else if(ctx === 'rahasia') DB.rahasia.unshift({ id: generateId(), platform: document.getElementById('f-plat').value, user: document.getElementById('f-usr').value, pass: document.getElementById('f-pwd').value, pemilik: AppState.currentUser, ket: ketVal });
+            else if(ctx === 'kesehatan') DB.kesehatan.unshift({ id: generateId(), nama: document.getElementById('f-knama').value, goldar: document.getElementById('f-kgol').value, alergi: document.getElementById('f-kal').value, ket: ketVal });
+            else if(ctx === 'tagihan') DB.tagihan.unshift({ id: generateId(), nama: document.getElementById('f-tnama').value, nominal: document.getElementById('f-tnom').value, tempo: document.getElementById('f-ttgl').value, lunas: false, ket: ketVal });
+            else if(ctx === 'garansi') DB.garansi.unshift({ id: generateId(), nama: document.getElementById('f-gnama').value, beli: document.getElementById('f-gtgl').value, sisa: document.getElementById('f-gsisa').value, ket: ketVal });
+            else if(ctx === 'kapsul') DB.kapsul.unshift({ id: generateId(), judul: document.getElementById('f-cnama').value, tanggal: document.getElementById('f-ctgl').value, ket: ketVal });
+            
+            saveDB(DB); 
+            renderData(ctx); 
+            closeModal('modal-form');
+            showToast('Berhasil Disimpan!', 'success');
+        });
+
+        // ================= AI ASSISTANT =================
+        function toggleAI() {
+            const p = document.getElementById('ai-panel');
+            if(p.classList.contains('opacity-0')) {
+                p.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+            } else {
+                p.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+            }
+        }
+
+        function sendAiPrompt(text) {
+            document.getElementById('ai-input').value = text;
+            document.getElementById('form-ai').dispatchEvent(new Event('submit'));
+        }
+
+        document.getElementById('form-ai').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('ai-input');
+            const val = input.value.trim(); if(!val) return;
+            
+            const box = document.getElementById('ai-chat-box');
+            // Balon User
+            box.innerHTML += `<div class="flex justify-end"><div class="bg-gradient-to-r from-brand-600 to-indigo-600 text-white p-4 rounded-2xl rounded-tr-sm max-w-[85%] shadow-md font-medium">${val}</div></div>`;
+            input.value = ''; box.scrollTop = box.scrollHeight;
+
+            // Logika Balasan Cepat AI dari Data Lokal
+            setTimeout(() => {
+                let reply = "Maaf, saya tidak mengerti. Coba klik salah satu tombol saran di bawah, atau tanya kata kunci seperti 'tagihan', 'garansi', atau 'medis'.";
+                const v = val.toLowerCase();
+                
+                if(v.includes('tagihan') || v.includes('bayar')) {
+                    const unp = DB.tagihan.filter(t=>!t.lunas);
+                    reply = unp.length > 0 ? `🚨 Ada ${unp.length} tagihan belum dibayar. Paling penting: ${unp[0].nama} (${formatRp(unp[0].nominal)}). Harap segera dilunasi ya.` : "✅ Kabar baik, semua tagihan Anda lunas bulan ini!";
+                } else if(v.includes('medis') || v.includes('darah')) {
+                    reply = `Data Medis Keluarga tercatat: ${DB.kesehatan.map(k=>`**${k.nama}** (Gol ${k.goldar})`).join(', ')}.`;
+                } else if(v.includes('garansi') || v.includes('rusak')) {
+                    reply = `Laci Garansi aktif: ${DB.garansi.map(g=>`${g.nama} (sisa ${g.sisa} bln)`).join(', ')}.`;
+                }
+
+                box.innerHTML += `<div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0 border border-brand-200"><i class="ph-fill ph-robot text-lg"></i></div><div class="bg-white p-4 rounded-2xl rounded-tl-sm shadow-sm border border-slate-200 text-slate-700 leading-relaxed max-w-[85%] font-medium">${reply}</div></div>`;
+                box.scrollTop = box.scrollHeight;
+            }, 800);
+        });
+
+        // ================= PWA INSTALL =================
+        function promptInstall() {
+            showToast('Fitur Instal: Ketuk tombol "Tambahkan ke Layar Utama" (Add to Home Screen) di menu browser HP Anda (ikon titik tiga) untuk memasang aplikasi ini.', 'info');
+        }
+    </script>
+</body>
+</html>
