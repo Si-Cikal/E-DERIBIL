@@ -865,36 +865,90 @@
     <!-- TOAST CONTAINER -->
     <div id="toast-container" class="fixed top-8 left-1/2 -translate-x-1/2 z-[300] flex flex-col gap-3 w-full max-w-sm px-4 pointer-events-none"></div>
 
-    <script>
-        // ================= STATE & DATABASE (LOCAL STORAGE DRIVEN, NO FIREBASE NEEDED) =================
-        const AppState = { currentUser: null, activeTab: 'dokumen', isSidebarOpen: false, modalContext: null };
-        
-        // Data Bibit (Seed Data)
-        const DefaultDB = {
-            dokumen: [{ id: 'd1', nama: "Kartu Keluarga Baru", pemilik: "Keluarga", noreg: "KK-9988", date: "Hari ini" }],
-            rahasia: [{ id: 'r1', platform: "Netflix Premium", user: "keluarga@deribil.com", pass: "NontonBersama123", pemilik: "Keluarga" }],
-            kesehatan: [{ id: 'k1', nama: "Nabil", goldar: "O", alergi: "Kacang Tanah" }],
-            garansi: [{ id: 'g1', nama: "Smart TV LG 50\"", beli: "2024-01-15", sisa: 12 }],
-            tagihan: [{ id: 't1', nama: "Pajak STNK Mobil (B 1234 CD)", nominal: 3500000, tempo: "2026-10-10", lunas: false }],
-            kapsul: [{ id: 'c1', judul: "Pesan Untuk Nabil 17th", tanggal: "2032-08-15" }],
-            users: { 'Dede': '123456', 'Rizka': '123456', 'Nabil': '000000' } // Default PINs
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ================= FIREBASE CLOUD CONFIGURATION =================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2DCXANfAW2I0pR2ewOFe4BygCuu2d-dU",
+            authDomain: "e-deribil-ff4dc.firebaseapp.com",
+            projectId: "e-deribil-ff4dc",
+            storageBucket: "e-deribil-ff4dc.firebasestorage.app",
+            messagingSenderId: "1003399829555",
+            appId: "1:1003399829555:web:67f46467d0fedb8257eb46"
         };
 
-        function getDB() {
-            const stored = localStorage.getItem('deribil_v3');
-            let data = stored ? JSON.parse(stored) : DefaultDB;
-            // Menambal data PIN jika update dari versi sebelumnya
-            if(!data.users) data.users = { 'Dede': '123456', 'Rizka': '123456', 'Nabil': '000000' };
-            return data;
-        }
-        function saveDB(data) {
-            localStorage.setItem('deribil_v3', JSON.stringify(data));
-        }
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // Memastikan sistem siap meski dipindahkan ke Vercel (Fallback UID)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'e-deribil-pro';
+        
+        window.AppState = { currentUser: null, activeTab: 'dokumen', isSidebarOpen: false, modalContext: null };
+        window.DB = {
+            dokumen: [], rahasia: [], kesehatan: [], garansi: [], tagihan: [], kapsul: [],
+            users: { 'Dede': '123456', 'Rizka': '123456', 'Nabil': '000000' }
+        };
 
-        let DB = getDB();
+        // ================= FIREBASE AUTH & SYNC =================
+        async function initFirebase() {
+            try {
+                let authSuccess = false;
+                
+                // Coba gunakan token bawaan lingkungan (jika ada)
+                if (typeof __initial_auth_token !== 'undefined') {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                        authSuccess = true;
+                    } catch (tokenErr) {
+                        console.warn("Token bawaan sistem tidak cocok dengan Firebase Anda. Beralih ke Anonymous Login...");
+                    }
+                }
+                
+                // Fallback: Jika gagal atau tidak ada token, gunakan Anonymous Auth ke DB Anda
+                if (!authSuccess) {
+                    await signInAnonymously(auth);
+                }
+                
+                const user = auth.currentUser;
+                if (!user) return;
+                
+                // Realtime Sync for Collections
+                const collections = ['dokumen', 'rahasia', 'kesehatan', 'garansi', 'tagihan', 'kapsul'];
+                collections.forEach(colName => {
+                    const colRef = collection(db, 'artifacts', appId, 'users', user.uid, colName);
+                    onSnapshot(colRef, (snapshot) => {
+                        window.DB[colName] = [];
+                        snapshot.forEach(docSnap => window.DB[colName].push({ id: docSnap.id, ...docSnap.data() }));
+                        
+                        // Sortir otomatis dari terbaru ke terlama
+                        window.DB[colName].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                        
+                        if(window.AppState.activeTab === colName) window.renderData(colName);
+                    }, (err) => console.error("Sync Error:", err));
+                });
+
+                // Realtime Sync for Admin PIN configurations
+                const configRef = collection(db, 'artifacts', appId, 'users', user.uid, 'config');
+                onSnapshot(configRef, (snapshot) => {
+                    snapshot.forEach(docSnap => {
+                        if(docSnap.id === 'pins') window.DB.users = { ...window.DB.users, ...docSnap.data() };
+                    });
+                }, (err) => console.error(err));
+                
+                console.log("🟢 Firebase Berhasil Terkoneksi!");
+            } catch(e) {
+                console.error("Auth error:", e);
+                window.showToast("Gagal koneksi ke Cloud Firestore: " + e.message, "error");
+            }
+        }
+        initFirebase();
 
         // ================= UTILITIES =================
-        function showToast(msg, type = 'info') {
+        window.showToast = function(msg, type = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             const bgClass = type === 'success' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : (type === 'error' ? 'bg-gradient-to-r from-rose-500 to-red-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600');
@@ -911,30 +965,30 @@
             }, 3500);
         }
 
-        function formatRp(angka) { return 'Rp ' + Number(angka).toLocaleString('id-ID'); }
-        function generateId() { return Math.random().toString(36).substr(2, 9); }
+        window.formatRp = function(angka) { return 'Rp ' + Number(angka).toLocaleString('id-ID'); }
+        window.generateId = function() { return Math.random().toString(36).substr(2, 9); }
 
-        function copyToClip(text) {
+        window.copyToClip = function(text) {
             const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select();
             document.execCommand('copy'); document.body.removeChild(el);
-            showToast('Disalin ke clipboard!', 'success');
+            window.showToast('Disalin ke clipboard!', 'success');
         }
 
         // ================= AUTHENTICATION & LOGIN =================
-        function updatePinHint() {
+        window.updatePinHint = function() {
             const u = document.getElementById('login-user').value;
             const h = document.getElementById('pin-hint');
             h.innerText = (u === 'Nabil') ? 'PIN: 000000' : 'PIN: 123456';
         }
 
-        function togglePassword(inputId, iconId) {
+        window.togglePassword = function(inputId, iconId) {
             const input = document.getElementById(inputId); const icon = document.getElementById(iconId);
             if(input.type === 'password') { input.type = 'text'; icon.className = 'ph-bold ph-eye-slash text-brand-600 text-lg'; }
             else { input.type = 'password'; icon.className = 'ph-bold ph-eye text-lg'; }
         }
 
-        function simulateBiometric() {
-            showToast('Memindai Sidik Jari...', 'info');
+        window.simulateBiometric = function() {
+            window.showToast('Memindai Sidik Jari...', 'info');
             setTimeout(() => { 
                 document.getElementById('login-pin').value = document.getElementById('login-user').value === 'Nabil' ? '000000' : '123456'; 
                 document.getElementById('login-form').dispatchEvent(new Event('submit')); 
@@ -946,61 +1000,53 @@
             const user = document.getElementById('login-user').value;
             const pin = document.getElementById('login-pin').value;
             
-            const validPin = DB.users ? DB.users[user] : (user === 'Nabil' ? '000000' : '123456');
+            const validPin = window.DB.users ? window.DB.users[user] : (user === 'Nabil' ? '000000' : '123456');
             
             if(pin === validPin || pin === 'Bypass') {
-                AppState.currentUser = user;
+                window.AppState.currentUser = user;
                 
-                // Update Profil Sidebar
                 document.getElementById('user-avatar').innerText = user.charAt(0);
                 document.getElementById('user-name').innerText = user;
                 const roleEl = document.getElementById('user-role');
-                if(user === 'Dede') { roleEl.innerText = 'Kepala Keluarga'; roleEl.className = 'text-[10px] font-black text-brand-600 uppercase tracking-widest mt-1 bg-brand-50 border border-brand-100 px-2 py-0.5 rounded-md inline-block'; }
-                else if(user === 'Rizka') { roleEl.innerText = 'Istri (Co-Admin)'; roleEl.className = 'text-[10px] font-black text-fuchsia-600 uppercase tracking-widest mt-1 bg-fuchsia-50 border border-fuchsia-100 px-2 py-0.5 rounded-md inline-block'; }
-                else { roleEl.innerText = 'Mode Anak (Terbatas)'; roleEl.className = 'text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md inline-block'; }
+                if(user === 'Dede') { roleEl.innerText = 'Kepala Keluarga'; roleEl.className = 'text-[10px] font-black text-brand-600 uppercase tracking-widest mt-1 bg-brand-50 border border-brand-100 px-2 py-0.5 rounded-md inline-block shadow-sm'; }
+                else if(user === 'Rizka') { roleEl.innerText = 'Istri (Co-Admin)'; roleEl.className = 'text-[10px] font-black text-fuchsia-600 uppercase tracking-widest mt-1 bg-fuchsia-50 border border-fuchsia-100 px-2 py-0.5 rounded-md inline-block shadow-sm'; }
+                else { roleEl.innerText = 'Mode Anak (Terbatas)'; roleEl.className = 'text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md inline-block shadow-sm'; }
                 
-                // Transisi UI
                 document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
                     document.getElementById('login-screen').classList.add('hidden');
                     document.getElementById('main-app').classList.remove('hidden');
                     document.getElementById('ai-btn').classList.remove('hidden');
-                    switchTab('dokumen');
-                    showToast(`Akses Diterima! Selamat datang, ${user}.`, 'success');
+                    window.switchTab('dokumen');
+                    window.showToast(`Akses Diterima! Selamat datang, ${user}.`, 'success');
                 }, 700);
             } else {
-                showToast('PIN Salah! Silakan coba lagi.', 'error');
+                window.showToast('PIN Salah! Silakan coba lagi.', 'error');
             }
         });
 
-        function logout() {
-            showToast('Mengunci Brankas dengan Aman...', 'info');
+        window.logout = function() {
+            window.showToast('Mengunci Brankas dengan Aman...', 'info');
             setTimeout(() => location.reload(), 800);
         }
 
-        // ================= NAVIGATION & RENDERING =================
-        function switchTab(tab) {
-            // Logika Pembatasan Mode Anak
-            if(AppState.currentUser === 'Nabil' && (tab === 'rahasia' || tab === 'tagihan')) {
-                showToast('Akses Ditolak: Fitur orang dewasa dikunci pada Mode Anak.', 'error'); return;
+        // ================= NAVIGATION & CLOUD OPERATIONS =================
+        window.switchTab = function(tab) {
+            if(window.AppState.currentUser === 'Nabil' && (tab === 'rahasia' || tab === 'tagihan' || tab === 'pengaturan')) {
+                window.showToast('Akses Ditolak: Fitur orang dewasa dikunci pada Mode Anak.', 'error'); return;
             }
 
-            AppState.activeTab = tab;
-            
-            // Sembunyikan semua, Tampilkan target
+            window.AppState.activeTab = tab;
             document.querySelectorAll('.tab-panel').forEach(p => { p.classList.add('hidden'); p.classList.remove('block'); });
             const target = document.getElementById(`panel-${tab}`);
             if(target) { target.classList.remove('hidden'); target.classList.add('block'); }
             
-            // Reset state tombol navigasi
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.className = "nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-bold transition-all border border-transparent hover:bg-white/60 text-slate-600";
-                // Bersihkan badge bg
                 const iconBg = b.querySelector('div.rounded-full');
                 if(iconBg) iconBg.className = iconBg.className.replace(/bg-\w+-100/g, 'bg-slate-100').replace(/text-\w+-500/g, 'text-slate-500');
             });
 
-            // Aktifkan tombol yang diklik
             const btn = document.getElementById(`nav-${tab}`);
             if(btn) {
                 btn.className = "nav-btn active w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left font-black transition-all bg-white border border-slate-200/60 shadow-sm text-brand-600";
@@ -1008,63 +1054,65 @@
                 if(iconBg) iconBg.className = iconBg.className.replace('bg-slate-100', 'bg-brand-100').replace('text-slate-500', 'text-brand-600');
             }
             
-            // Tutup sidebar di HP
-            if(window.innerWidth < 1024 && AppState.isSidebarOpen) toggleSidebar();
-            
-            renderData(tab);
+            if(window.innerWidth < 1024 && window.AppState.isSidebarOpen) window.toggleSidebar();
+            window.renderData(tab);
+        }
+
+        window.toggleSidebar = function() {
+            window.AppState.isSidebarOpen = !window.AppState.isSidebarOpen;
+            const sb = document.getElementById('sidebar'); const ov = document.getElementById('sidebar-overlay');
+            if(window.AppState.isSidebarOpen) { sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden'); setTimeout(()=>ov.classList.remove('opacity-0'),10); } 
+            else { sb.classList.add('-translate-x-full'); ov.classList.add('opacity-0'); setTimeout(()=>ov.classList.add('hidden'),300); }
+        }
+
+        window.handleSearch = function(val) { window.renderData(window.AppState.activeTab, val.toLowerCase()); }
+
+        window.deleteItem = function(tab, id) {
+            const user = auth.currentUser;
+            if (!user) { window.showToast('Gagal koneksi server!', 'error'); return; }
+            const docRef = doc(db, 'artifacts', appId, 'users', user.uid, tab, id);
+            deleteDoc(docRef).then(() => window.showToast('Data berhasil dihapus dari Cloud Firestore.', 'info'));
+        }
+
+        window.toggleLunas = function(id) {
+            const user = auth.currentUser;
+            if (!user) { window.showToast('Gagal koneksi server!', 'error'); return; }
+            const t = window.DB.tagihan.find(x => x.id === id);
+            if(t) {
+                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'tagihan', id);
+                setDoc(docRef, { lunas: !t.lunas }, { merge: true });
+            }
         }
 
         window.updatePinInfo = function() {
             const resetUser = document.getElementById('reset-pin-user').value;
             const newPin = document.getElementById('reset-pin-new').value;
             
-            // Proteksi agar anak tidak bisa mengganti PIN sembarangan
-            if(AppState.currentUser === 'Nabil') {
-                showToast('Akses Ditolak: Fitur Keamanan ini khusus untuk Admin.', 'error');
-                return;
+            if(window.AppState.currentUser === 'Nabil') {
+                window.showToast('Akses Ditolak: Fitur Keamanan ini khusus untuk Admin.', 'error'); return;
             }
 
-            if(!DB.users) DB.users = { 'Dede': '123456', 'Rizka': '123456', 'Nabil': '000000' };
-            
-            DB.users[resetUser] = newPin; // Simpan PIN ke database lokal
-            saveDB(DB);
-            
-            document.getElementById('reset-pin-new').value = '';
-            showToast(`Sistem Diperbarui! PIN untuk ${resetUser} berhasil diganti.`, 'success');
+            const user = auth.currentUser;
+            if(!user) { window.showToast('Gagal: Koneksi Cloud terputus.', 'error'); return; }
+
+            const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'pins');
+            setDoc(docRef, { [resetUser]: newPin }, { merge: true }).then(() => {
+                document.getElementById('reset-pin-new').value = '';
+                window.showToast(`Sistem Diperbarui! PIN untuk ${resetUser} berhasil diganti di Cloud.`, 'success');
+            }).catch(err => window.showToast('Gagal update PIN: ' + err.message, 'error'));
         };
 
-        function toggleSidebar() {
-            AppState.isSidebarOpen = !AppState.isSidebarOpen;
-            const sb = document.getElementById('sidebar'); const ov = document.getElementById('sidebar-overlay');
-            if(AppState.isSidebarOpen) { sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden'); setTimeout(()=>ov.classList.remove('opacity-0'),10); } 
-            else { sb.classList.add('-translate-x-full'); ov.classList.add('opacity-0'); setTimeout(()=>ov.classList.add('hidden'),300); }
-        }
-
-        function handleSearch(val) { renderData(AppState.activeTab, val.toLowerCase()); }
-
-        function deleteItem(tab, id) {
-            DB[tab] = DB[tab].filter(item => item.id !== id);
-            saveDB(DB); renderData(tab);
-            showToast('Data berhasil dihapus dari sistem lokal.', 'info');
-        }
-
-        function toggleLunas(id) {
-            const t = DB.tagihan.find(x => x.id === id);
-            if(t) { t.lunas = !t.lunas; saveDB(DB); renderData('tagihan'); }
-        }
-
-        // ================= RENDERING DATA KARTU GRADASI =================
-        function renderData(tab, query = '') {
+        // ================= RENDERING LOGIC =================
+        window.renderData = function(tab, query = '') {
             const grid = document.getElementById(`grid-${tab}`);
             if(!grid) return;
 
-            let data = DB[tab];
+            let data = window.DB[tab];
             if(query) {
                 data = data.filter(item => Object.values(item).some(val => String(val).toLowerCase().includes(query)));
             }
 
-            // Update Badge Tagihan Notif Global
-            const unp = DB.tagihan.filter(t=>!t.lunas).length;
+            const unp = window.DB.tagihan.filter(t=>!t.lunas).length;
             const badgeTag = document.getElementById('badge-tagihan');
             if(badgeTag) { if(unp>0){ badgeTag.innerText = unp; badgeTag.classList.remove('hidden'); } else { badgeTag.classList.add('hidden'); } }
 
@@ -1075,7 +1123,7 @@
 
             let html = '';
             if(tab === 'dokumen') {
-                document.getElementById('kpi-doc-total').innerText = DB.dokumen.length;
+                document.getElementById('kpi-doc-total').innerText = window.DB.dokumen.length;
                 html = data.map(d => `
                     <div class="glass-card p-6 flex flex-col justify-between group">
                         <div>
@@ -1083,15 +1131,15 @@
                                 <div class="w-14 h-14 bg-gradient-to-tr from-cyan-400 to-blue-500 text-white rounded-[1.2rem] flex items-center justify-center text-2xl shrink-0 shadow-[0_5px_15px_rgba(59,130,246,0.3)] border border-white/40 group-hover:scale-110 transition-transform"><i class="ph-fill ph-file-text"></i></div>
                                 <div>
                                     <h3 class="font-black text-base text-slate-900 leading-tight">${d.nama}</h3>
-                                    <p class="text-[10px] font-black text-brand-600 uppercase tracking-widest mt-1 bg-brand-50 px-2 py-0.5 rounded-md inline-block">Milik: ${d.pemilik}</p>
+                                    <p class="text-[10px] font-black text-brand-600 uppercase tracking-widest mt-1 bg-brand-50 border border-brand-100 px-2 py-0.5 rounded-md inline-block shadow-sm">Milik: ${d.pemilik}</p>
                                 </div>
                             </div>
                             <p class="text-xs text-slate-500 font-bold bg-white px-3 py-1.5 rounded-lg inline-block border border-slate-200 shadow-sm">No Reg: ${d.noreg || '-'}</p>
                             ${d.ket ? `<div class="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-100/50 text-xs font-medium text-blue-800 leading-relaxed"><i class="ph-fill ph-info text-blue-500 mr-1"></i> ${d.ket}</div>` : ''}
                         </div>
                         <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-between items-center">
-                            <span class="text-[10px] font-bold text-slate-400"><i class="ph-bold ph-clock"></i> ${d.date}</span>
-                            <button onclick="deleteItem('dokumen', '${d.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button>
+                            <span class="text-[10px] font-bold text-slate-400"><i class="ph-bold ph-clock"></i> Cloud Synced</span>
+                            <button onclick="window.deleteItem('dokumen', '${d.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button>
                         </div>
                     </div>
                 `).join('');
@@ -1112,14 +1160,14 @@
                                         <p class="text-sm font-mono font-black text-amber-600 tracking-[0.2em]" id="pass-${r.id}">••••••••</p>
                                         <div class="flex gap-2">
                                             <button onclick="document.getElementById('pass-${r.id}').innerText = document.getElementById('pass-${r.id}').innerText === '••••••••' ? '${r.pass}' : '••••••••'; document.getElementById('pass-${r.id}').classList.toggle('tracking-[0.2em]')" class="text-slate-400 hover:text-amber-500 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-slate-100"><i class="ph-bold ph-eye"></i></button>
-                                            <button onclick="copyToClip('${r.pass}')" class="text-slate-400 hover:text-blue-500 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-slate-100"><i class="ph-bold ph-copy"></i></button>
+                                            <button onclick="window.copyToClip('${r.pass}')" class="text-slate-400 hover:text-blue-500 transition-colors bg-white p-1.5 rounded-lg shadow-sm border border-slate-100"><i class="ph-bold ph-copy"></i></button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             ${r.ket ? `<div class="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100/50 text-xs font-medium text-amber-800 leading-relaxed"><i class="ph-fill ph-info text-amber-500 mr-1"></i> ${r.ket}</div>` : ''}
                         </div>
-                        <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-end"><button onclick="deleteItem('rahasia', '${r.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-black flex items-center gap-1.5 bg-white hover:bg-rose-50 px-3 py-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i> Hapus</button></div>
+                        <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-end"><button onclick="window.deleteItem('rahasia', '${r.id}')" class="text-slate-400 hover:text-rose-500 text-xs font-black flex items-center gap-1.5 bg-white hover:bg-rose-50 px-3 py-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i> Hapus</button></div>
                     </div>
                 `).join('');
             }
@@ -1128,14 +1176,14 @@
                     <div class="glass-card p-6 flex flex-col justify-between group">
                         <div class="flex items-center gap-5 mb-6">
                             <div class="w-16 h-16 bg-gradient-to-tr from-rose-400 to-pink-500 text-white shadow-[0_5px_15px_rgba(244,63,94,0.3)] border border-white/40 rounded-[1.2rem] flex items-center justify-center font-black text-3xl group-hover:scale-110 transition-transform">${k.goldar}</div>
-                            <div><h3 class="font-black text-xl text-slate-900">${k.nama}</h3><p class="text-[10px] font-black text-rose-600 uppercase tracking-widest mt-1 bg-rose-50 px-2 py-0.5 rounded-md inline-block">Pasien Keluarga</p></div>
+                            <div><h3 class="font-black text-xl text-slate-900">${k.nama}</h3><p class="text-[10px] font-black text-rose-600 uppercase tracking-widest mt-1 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md inline-block shadow-sm">Pasien Keluarga</p></div>
                         </div>
                         <div class="bg-white/80 p-4 rounded-[1.2rem] border border-white mb-2 shadow-sm">
                             <p class="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-1.5">Riwayat Alergi Obat/Makanan</p>
                             <p class="text-sm font-bold text-rose-600 bg-rose-50 px-3 py-2 rounded-xl border border-rose-100 flex items-center gap-2"><i class="ph-fill ph-warning-circle"></i> ${k.alergi || 'Tidak Ada Data Alergi'}</p>
                         </div>
                         ${k.ket ? `<div class="mb-5 mt-3 p-3 bg-rose-50 rounded-xl border border-rose-100/50 text-xs font-medium text-rose-800 leading-relaxed"><i class="ph-fill ph-info text-rose-500 mr-1"></i> ${k.ket}</div>` : ''}
-                        <div class="flex justify-end border-t border-slate-200/60 pt-5 mt-auto"><button onclick="deleteItem('kesehatan', '${k.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button></div>
+                        <div class="flex justify-end border-t border-slate-200/60 pt-5 mt-auto"><button onclick="window.deleteItem('kesehatan', '${k.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button></div>
                     </div>
                 `).join('');
             }
@@ -1150,15 +1198,15 @@
                             <p class="text-xs text-slate-500 font-bold bg-white px-3 py-1.5 rounded-lg inline-block border border-slate-200 shadow-sm"><i class="ph-bold ph-calendar"></i> Beli: ${g.beli}</p>
                             ${g.ket ? `<div class="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100/50 text-xs font-medium text-emerald-800 leading-relaxed"><i class="ph-fill ph-info text-emerald-500 mr-1"></i> ${g.ket}</div>` : ''}
                         </div>
-                        <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-end"><button onclick="deleteItem('garansi', '${g.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button></div>
+                        <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-end"><button onclick="window.deleteItem('garansi', '${g.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button></div>
                     </div>
                 `).join('');
             }
             else if(tab === 'tagihan') {
                 let unpaid = 0, paid = 0;
-                DB.tagihan.forEach(t => { if(t.lunas) paid += Number(t.nominal); else unpaid += Number(t.nominal); });
-                document.getElementById('kpi-tagihan-unpaid').innerText = formatRp(unpaid);
-                document.getElementById('kpi-tagihan-paid').innerText = formatRp(paid);
+                window.DB.tagihan.forEach(t => { if(t.lunas) paid += Number(t.nominal); else unpaid += Number(t.nominal); });
+                document.getElementById('kpi-tagihan-unpaid').innerText = window.formatRp(unpaid);
+                document.getElementById('kpi-tagihan-paid').innerText = window.formatRp(paid);
 
                 html = data.map(t => `
                     <div class="glass-card p-6 flex flex-col justify-between group relative overflow-hidden ${t.lunas ? 'opacity-70 grayscale-[30%]' : ''}">
@@ -1169,14 +1217,14 @@
                                 <span class="text-xs text-slate-600 font-mono font-black bg-white px-2.5 py-1.5 rounded-lg shadow-sm border border-slate-200">Tempo: ${t.tempo}</span>
                             </div>
                             <h3 class="font-black text-base text-slate-900 mb-2 leading-tight ${t.lunas?'line-through':''}">${t.nama}</h3>
-                            <p class="text-3xl font-black ${t.lunas?'text-slate-400':'text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-500 drop-shadow-sm'}">${formatRp(t.nominal)}</p>
+                            <p class="text-3xl font-black ${t.lunas?'text-slate-400':'text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-500 drop-shadow-sm'}">${window.formatRp(t.nominal)}</p>
                             ${t.ket ? `<div class="mt-4 p-3 bg-orange-50 rounded-xl border border-orange-100/50 text-xs font-medium text-orange-800 leading-relaxed"><i class="ph-fill ph-info text-orange-500 mr-1"></i> ${t.ket}</div>` : ''}
                         </div>
                         <div class="pt-5 mt-5 border-t border-slate-200/60 flex justify-between items-center relative z-10">
-                            <button onclick="toggleLunas('${t.id}')" class="px-5 py-2.5 ${t.lunas?'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50':'bg-gradient-to-r from-emerald-400 to-teal-500 text-white border border-white/30 shadow-[0_5px_15px_rgba(16,185,129,0.3)] hover:scale-105'} transition-transform rounded-xl text-xs font-black flex items-center gap-2">
+                            <button onclick="window.toggleLunas('${t.id}')" class="px-5 py-2.5 ${t.lunas?'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50':'bg-gradient-to-r from-emerald-400 to-teal-500 text-white border border-white/30 shadow-[0_5px_15px_rgba(16,185,129,0.3)] hover:scale-105'} transition-transform rounded-xl text-xs font-black flex items-center gap-2">
                                 ${t.lunas ? 'Batal Lunas' : '<i class="ph-bold ph-check-circle text-lg"></i> Tandai Lunas'}
                             </button>
-                            <button onclick="deleteItem('tagihan', '${t.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button>
+                            <button onclick="window.deleteItem('tagihan', '${t.id}')" class="text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-xl transition-colors shadow-sm border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button>
                         </div>
                     </div>
                 `).join('');
@@ -1188,7 +1236,7 @@
                         <h3 class="font-black text-lg text-slate-900 mb-3">${c.judul}</h3>
                         <p class="text-[11px] text-fuchsia-700 font-mono font-black bg-white py-2 px-4 rounded-full shadow-sm inline-block border border-fuchsia-100 mb-3">Buka: ${c.tanggal}</p>
                         ${c.ket ? `<div class="mt-2 p-3 bg-white/70 rounded-xl text-xs font-medium text-fuchsia-800 leading-relaxed text-left border border-fuchsia-100"><i class="ph-fill ph-info text-fuchsia-500 mr-1"></i> ${c.ket}</div>` : ''}
-                        <button onclick="deleteItem('kapsul', '${c.id}')" class="absolute top-4 right-4 text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-full shadow-sm transition-colors border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button>
+                        <button onclick="window.deleteItem('kapsul', '${c.id}')" class="absolute top-4 right-4 text-slate-400 hover:text-rose-500 bg-white hover:bg-rose-50 p-2 rounded-full shadow-sm transition-colors border border-slate-100"><i class="ph-bold ph-trash text-lg"></i></button>
                     </div>
                 `).join('');
             }
@@ -1197,21 +1245,13 @@
         }
 
         // ================= MODAL & FORMS =================
-        function openModal(param1, param2) {
-            let id = param1;
-            let context = param2;
-            
-            // Perbaikan otomatis jika fungsi dipanggil dengan openModal('namatab') dari HTML
-            if (param1 !== 'modal-form' && param1 !== 'modal-logo' && !param2) {
-                id = 'modal-form';
-                context = param1;
-            }
-
-            const m = document.getElementById(id);
-            if(!m) return;
+        window.openModal = function(param1, param2) {
+            let id = param1; let context = param2;
+            if (param1 !== 'modal-form' && param1 !== 'modal-logo' && !param2) { id = 'modal-form'; context = param1; }
+            const m = document.getElementById(id); if(!m) return;
             
             if (id === 'modal-form' && context) {
-                AppState.modalContext = context;
+                window.AppState.modalContext = context;
                 const title = document.getElementById('modal-title'); 
                 const fields = document.getElementById('dynamic-fields');
                 const btn = document.getElementById('btn-submit-form');
@@ -1280,7 +1320,6 @@
                     `;
                 }
                 
-                // Tambahkan field Keterangan ke SEMUA jenis form di bagian bawah
                 html += `
                     <div class="mt-5">
                         <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Keterangan Tambahan / Detail</label>
@@ -1295,9 +1334,8 @@
             setTimeout(() => { m.classList.remove('opacity-0'); m.querySelector('div').classList.remove('scale-95'); }, 10);
         }
 
-        function closeModal(id) {
-            const m = document.getElementById(id); 
-            if(!m) return;
+        window.closeModal = function(id) {
+            const m = document.getElementById(id); if(!m) return;
             const b = m.querySelector('div');
             m.classList.add('opacity-0'); b.classList.add('scale-95');
             setTimeout(() => { m.classList.add('hidden'); m.classList.remove('flex'); }, 300);
@@ -1305,33 +1343,39 @@
 
         document.getElementById('universal-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const ctx = AppState.modalContext;
+            const user = auth.currentUser;
+            if(!user) { window.showToast('Menunggu koneksi server Firebase...', 'error'); return; }
+
+            const ctx = window.AppState.modalContext;
             const ketVal = document.getElementById('f-ket') ? document.getElementById('f-ket').value : '';
+            const id = window.generateId();
+            let newData = null;
             
-            if(ctx === 'dokumen') DB.dokumen.unshift({ id: generateId(), nama: document.getElementById('f-nama').value, pemilik: document.getElementById('f-pemilik').value, noreg: document.getElementById('f-noreg').value, date: 'Baru saja', ket: ketVal });
-            else if(ctx === 'rahasia') DB.rahasia.unshift({ id: generateId(), platform: document.getElementById('f-plat').value, user: document.getElementById('f-usr').value, pass: document.getElementById('f-pwd').value, pemilik: AppState.currentUser, ket: ketVal });
-            else if(ctx === 'kesehatan') DB.kesehatan.unshift({ id: generateId(), nama: document.getElementById('f-knama').value, goldar: document.getElementById('f-kgol').value, alergi: document.getElementById('f-kal').value, ket: ketVal });
-            else if(ctx === 'tagihan') DB.tagihan.unshift({ id: generateId(), nama: document.getElementById('f-tnama').value, nominal: document.getElementById('f-tnom').value, tempo: document.getElementById('f-ttgl').value, lunas: false, ket: ketVal });
-            else if(ctx === 'garansi') DB.garansi.unshift({ id: generateId(), nama: document.getElementById('f-gnama').value, beli: document.getElementById('f-gtgl').value, sisa: document.getElementById('f-gsisa').value, ket: ketVal });
-            else if(ctx === 'kapsul') DB.kapsul.unshift({ id: generateId(), judul: document.getElementById('f-cnama').value, tanggal: document.getElementById('f-ctgl').value, ket: ketVal });
+            if(ctx === 'dokumen') newData = { nama: document.getElementById('f-nama').value, pemilik: document.getElementById('f-pemilik').value, noreg: document.getElementById('f-noreg').value, date: 'Baru saja', ket: ketVal };
+            else if(ctx === 'rahasia') newData = { platform: document.getElementById('f-plat').value, user: document.getElementById('f-usr').value, pass: document.getElementById('f-pwd').value, pemilik: window.AppState.currentUser, ket: ketVal };
+            else if(ctx === 'kesehatan') newData = { nama: document.getElementById('f-knama').value, goldar: document.getElementById('f-kgol').value, alergi: document.getElementById('f-kal').value, ket: ketVal };
+            else if(ctx === 'tagihan') newData = { nama: document.getElementById('f-tnama').value, nominal: document.getElementById('f-tnom').value, tempo: document.getElementById('f-ttgl').value, lunas: false, ket: ketVal };
+            else if(ctx === 'garansi') newData = { nama: document.getElementById('f-gnama').value, beli: document.getElementById('f-gtgl').value, sisa: document.getElementById('f-gsisa').value, ket: ketVal };
+            else if(ctx === 'kapsul') newData = { judul: document.getElementById('f-cnama').value, tanggal: document.getElementById('f-ctgl').value, ket: ketVal };
             
-            saveDB(DB); 
-            renderData(ctx); 
-            closeModal('modal-form');
-            showToast('Berhasil Disimpan!', 'success');
+            if(newData) {
+                newData.timestamp = Date.now();
+                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, ctx, id);
+                setDoc(docRef, newData).then(() => {
+                    window.closeModal('modal-form');
+                    window.showToast('Data berhasil disimpan ke Firestore Cloud!', 'success');
+                }).catch(err => window.showToast('Gagal simpan ke Cloud: ' + err.message, 'error'));
+            }
         });
 
         // ================= AI ASSISTANT =================
-        function toggleAI() {
+        window.toggleAI = function() {
             const p = document.getElementById('ai-panel');
-            if(p.classList.contains('opacity-0')) {
-                p.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-            } else {
-                p.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-            }
+            if(p.classList.contains('opacity-0')) { p.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); } 
+            else { p.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); }
         }
 
-        function sendAiPrompt(text) {
+        window.sendAiPrompt = function(text) {
             document.getElementById('ai-input').value = text;
             document.getElementById('form-ai').dispatchEvent(new Event('submit'));
         }
@@ -1342,22 +1386,20 @@
             const val = input.value.trim(); if(!val) return;
             
             const box = document.getElementById('ai-chat-box');
-            // Balon User
             box.innerHTML += `<div class="flex justify-end"><div class="bg-gradient-to-r from-brand-600 to-indigo-600 text-white p-4 rounded-2xl rounded-tr-sm max-w-[85%] shadow-md font-medium">${val}</div></div>`;
             input.value = ''; box.scrollTop = box.scrollHeight;
 
-            // Logika Balasan Cepat AI dari Data Lokal
             setTimeout(() => {
                 let reply = "Maaf, saya tidak mengerti. Coba klik salah satu tombol saran di bawah, atau tanya kata kunci seperti 'tagihan', 'garansi', atau 'medis'.";
                 const v = val.toLowerCase();
                 
                 if(v.includes('tagihan') || v.includes('bayar')) {
-                    const unp = DB.tagihan.filter(t=>!t.lunas);
-                    reply = unp.length > 0 ? `🚨 Ada ${unp.length} tagihan belum dibayar. Paling penting: ${unp[0].nama} (${formatRp(unp[0].nominal)}). Harap segera dilunasi ya.` : "✅ Kabar baik, semua tagihan Anda lunas bulan ini!";
+                    const unp = window.DB.tagihan.filter(t=>!t.lunas);
+                    reply = unp.length > 0 ? `🚨 Ada ${unp.length} tagihan belum dibayar. Paling penting: ${unp[0].nama} (${window.formatRp(unp[0].nominal)}). Harap segera dilunasi ya.` : "✅ Kabar baik, semua tagihan Anda lunas bulan ini!";
                 } else if(v.includes('medis') || v.includes('darah')) {
-                    reply = `Data Medis Keluarga tercatat: ${DB.kesehatan.map(k=>`**${k.nama}** (Gol ${k.goldar})`).join(', ')}.`;
+                    reply = `Data Medis Keluarga tercatat: ${window.DB.kesehatan.map(k=>`**${k.nama}** (Gol ${k.goldar})`).join(', ')}.`;
                 } else if(v.includes('garansi') || v.includes('rusak')) {
-                    reply = `Laci Garansi aktif: ${DB.garansi.map(g=>`${g.nama} (sisa ${g.sisa} bln)`).join(', ')}.`;
+                    reply = `Laci Garansi aktif: ${window.DB.garansi.map(g=>`${g.nama} (sisa ${g.sisa} bln)`).join(', ')}.`;
                 }
 
                 box.innerHTML += `<div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0 border border-brand-200"><i class="ph-fill ph-robot text-lg"></i></div><div class="bg-white p-4 rounded-2xl rounded-tl-sm shadow-sm border border-slate-200 text-slate-700 leading-relaxed max-w-[85%] font-medium">${reply}</div></div>`;
@@ -1365,9 +1407,8 @@
             }, 800);
         });
 
-        // ================= PWA INSTALL =================
-        function promptInstall() {
-            showToast('Fitur Instal: Ketuk tombol "Tambahkan ke Layar Utama" (Add to Home Screen) di menu browser HP Anda (ikon titik tiga) untuk memasang aplikasi ini.', 'info');
+        window.promptInstall = function() {
+            window.showToast('Fitur Instal: Ketuk tombol "Tambahkan ke Layar Utama" (Add to Home Screen) di menu browser HP Anda (ikon titik tiga) untuk memasang aplikasi ini.', 'info');
         }
     </script>
 </body>
